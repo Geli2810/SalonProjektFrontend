@@ -10,6 +10,7 @@ function App() {
   return (
     <>
       <div>
+        "here is the app"
         <CustomersSlide />
       </div>
     </>
