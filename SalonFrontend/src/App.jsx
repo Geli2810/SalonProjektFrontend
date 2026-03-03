@@ -1,20 +1,16 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import CustomersSlide from './Store/Components/CustomersSlide.jsx'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./Store/Components/CustomerLogIn";
+import Dashboard from "./Store/Components/CustomerDash";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        "here is the app"
-        <CustomersSlide />
-      </div>
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

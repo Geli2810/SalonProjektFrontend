@@ -13,14 +13,32 @@ export const fetchCustomers = createAsyncThunk(
             if (error.response) {
                 return rejectWithValue(`Server returned ${error.response.status}`);
             }
-
             if (error.code === 'ECONNABORTED') {
                 return rejectWithValue('Request timed out');
             }
-
             return rejectWithValue(error.message || 'Failed to fetch customers');
         }
     }
+);
+
+export const GivLogInON = createAsyncThunk(
+    'customers/GivLogInON',
+    async (logInData, {rejectWithValue}) => {
+        try {
+            const response = await axios.post('https://salonproject.onrender.com/api/HairDresserSalon/login', logInData, {
+                timeout: 10000,
+            });
+            return response.data;
+        } catch (error) {
+            if (error.response) {
+                return rejectWithValue(`Server returned ${error.response.status}`);
+            }
+            if (error.code === 'ECONNABORTED') {
+                return rejectWithValue('Request timed out');
+            }
+            return rejectWithValue(error.message || 'Failed to fetch customers');
+        }
+            }
 );
 
 const customersSlice = createSlice({
@@ -30,7 +48,11 @@ const customersSlice = createSlice({
         status: 'idle',
         error: null,
     },
-    reducers: {},
+    reducers: {
+
+    },
+
+    
     extraReducers: (builder) => {
         builder
             .addCase(fetchCustomers.pending, (state) => {

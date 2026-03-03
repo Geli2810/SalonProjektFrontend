@@ -27,9 +27,11 @@ const CustomersSlide = () => {
             <h2>Customers</h2>
             <ul>
                 {customers.map((customer) => (
-                    <li key={customer.id}>{customer.name}</li>
+                    <li key={customer.kundeId}>{customer.navn} {customer.telefon}</li>
                 ))}
             </ul>
+
+   
         </div>
     );
 }
