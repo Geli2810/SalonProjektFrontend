@@ -1,18 +1,16 @@
 import React, { useState } from "react";
 import axios from "axios";
-// RETTELSE HER: Vi tilføjer 'Link' til vores import fra react-router-dom
 import { useNavigate, Link } from "react-router-dom"; 
 import { User, Lock, ArrowRight } from "lucide-react";
 
 export default function CustomerLogIn({ onLoginSuccess }) {
   const navigate = useNavigate();
-  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_URL = ' https://salonproject.onrender.com';
+  const API_URL = "https://salonproject.onrender.com";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,19 +27,14 @@ export default function CustomerLogIn({ onLoginSuccess }) {
       const token = response.data.token;
 
       if (userData) {
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("token", token);
-        
-        if (onLoginSuccess) {
-          onLoginSuccess(userData);
-        }
-        
+        sessionStorage.setItem("user", JSON.stringify(userData));
+        sessionStorage.setItem("token", token);
+        if (onLoginSuccess) onLoginSuccess(userData);
         navigate("/dashboard");
       }
-
     } catch (err) {
       console.error("Login fejlede", err);
-      setError(err.response?.data?.message || "Forkert e-mail eller adgangskode. Prøv igen.");
+      setError(err.response?.data?.message || "Forkert e-mail eller adgangskode.");
     } finally {
       setLoading(false);
     }
@@ -52,12 +45,12 @@ export default function CustomerLogIn({ onLoginSuccess }) {
       <div className="max-w-md w-full bg-white p-10 rounded-[2.5rem] shadow-2xl border border-gray-50 animate-in fade-in zoom-in duration-500">
         
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-serif tracking-[0.2em] uppercase mb-2">Salon Royale</h1>
-          <p className="text-[10px] text-gray-400 uppercase tracking-[0.3em] font-light">Log ind på din profil</p>
+          <h1 className="text-3xl font-serif tracking-[0.2em] uppercase mb-2 text-[#1a1a1a]">Salon Royale</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-[0.3em] font-light italic text-center">Log ind på din profil</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 text-[11px] rounded-2xl border border-red-100 text-center font-bold italic">
+          <div className="mb-6 p-4 bg-red-50 text-red-600 text-[11px] rounded-2xl border border-red-100 text-center font-bold italic animate-pulse">
             {error}
           </div>
         )}
@@ -87,19 +80,20 @@ export default function CustomerLogIn({ onLoginSuccess }) {
             />
           </div>
 
+          {/* HER ER FIXET: justify-center og gap-3 sørger for at pilen følger teksten */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#1a1a1a] text-white py-5 rounded-2xl uppercase text-[10px] tracking-[0.4em] font-black hover:bg-amber-900 transition-all flex items-center justify-center gap-3 group disabled:bg-gray-300 shadow-xl active:scale-[0.98]"
+            className="w-full bg-[#1a1a1a] text-white py-5 rounded-2xl uppercase text-[10px] tracking-[0.4em] font-black hover:bg-amber-900 transition-all flex items-center justify-center gap-3 group disabled:bg-gray-300 shadow-xl active:scale-[0.98] shadow-amber-900/5"
           >
-            {loading ? "Logger ind..." : "Log Ind"}
+            <span>{loading ? "Logger ind..." : "Log Ind"}</span>
             {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
           </button>
         </form>
 
         <div className="mt-12 text-center space-y-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em]">
-            Mangler du en konto? <Link to="/Register" className="text-amber-800 font-black hover:underline transition-all">Opret her</Link>
+            Mangler du en konto? <Link to="/register" className="text-amber-800 font-black hover:underline transition-all">Opret her</Link>
           </p>
           <button 
             onClick={() => navigate("/")} 
