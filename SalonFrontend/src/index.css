@@ -2,19 +2,88 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* Lille bonus-fix til FullCalendar så den matcher dit design */
+/* 1. Generel Salon Royale Stil */
 .fc {
     font-family: 'Inter', sans-serif !important;
+    background-color: white !important;
+    border: none !important;
+    border-radius: 2.5rem !important;
+    overflow: hidden;
 }
+
 .fc-toolbar-title {
     font-family: 'Playfair Display', serif !important;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
+    font-size: 1.25rem !important;
 }
+
 .fc-button-primary {
     background-color: #1A1A1A !important;
     border: none !important;
     text-transform: uppercase;
-    font-size: 0.7rem !important;
-    letter-spacing: 0.1em;
+    font-size: 0.65rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.2em;
+    padding: 0.75rem 1.25rem !important;
+    border-radius: 1rem !important;
+}
+
+/* 2. KALENDER-NET OG "LEDIG" LOGIK */
+.fc-timegrid-slot {
+    background-color: #f0fdf4 !important; /* Lys grøn baggrund */
+    border-bottom: 1px solid #f1f5f9 !important;
+    height: 4.5rem !important; /* Gør rækkerne højere */
+    position: relative;
+
+    /* SVG BAGGRUND: Gentager ordet LEDIG vandret i hver dagskolonne */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='40'><text x='50%' y='50%' font-family='Inter, sans-serif' font-weight='900' font-size='7' fill='%2310b981' opacity='0.25' text-anchor='middle' dominant-baseline='middle' letter-spacing='1'>LEDIG</text></svg>") !important;
+    background-repeat: repeat-x !important;
+    background-position: center !important;
+}
+
+/* 3. OPTAGET OG SKOLE (Dækker teksten) */
+.fc-v-event, .fc-bg-event {
+    z-index: 10 !important; /* Lægger sig ovenpå LEDIG teksten */
+    opacity: 1 !important;  /* Gør feltet helt solidt */
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Specifik stil for Grå Bookinger */
+.fc-v-event {
+    background-color: #94a3b8 !important;
+    border-radius: 10px !important;
+}
+
+/* Specifik stil for Røde Skole-tider */
+.fc-bg-event, .skole-event {
+    background-color: #ef4444 !important;
+    opacity: 1 !important;
+}
+
+.fc-v-event .fc-event-main {
+    color: white !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    font-size: 0.65rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 4. Fine detaljer */
+.fc-theme-standard td, .fc-theme-standard th {
+    border: 1px solid #f8fafc !important;
+}
+
+.fc-day-today {
+    background-color: transparent !important;
+}
+
+.fc-timegrid-slot-label {
+    background-color: white !important;
+    font-size: 0.75rem !important;
+    color: #94a3b8 !important;
+    font-weight: 700 !important;
 }
