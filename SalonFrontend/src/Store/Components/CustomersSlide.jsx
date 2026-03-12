@@ -22,6 +22,7 @@ const CustomersSlide = () => {
         return <div>Error: {error}</div>;
     }
 
+    ///here it is where we will display the customers in a list, you can customize this as needed
     return (
         <div>
             <h2>Customers</h2>
