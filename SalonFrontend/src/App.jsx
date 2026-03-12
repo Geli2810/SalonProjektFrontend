@@ -1,26 +1,25 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import LandingPage from "./Store/Components/LandingPage";
 import Login from "./Store/Components/CustomerLogIn";
 import Dashboard from "./Store/Components/CustomerDash";
 import BookingPage from "./Store/Components/BookingView";
 import Register from "./Store/Components/Register";
 
-
 function App() {
-  const [user, setUser] = useState(null);
+  // Vi læser status med det samme fra sessionStorage
+  const [user, setUser] = useState(() => {
+    const savedUser = sessionStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
-  // Vi tjekker localStorage når appen starter
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
-
-  // En funktion til at opdatere login-status fra Login-komponenten
   const handleLoginSuccess = (userData) => {
     setUser(userData);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.clear();
+    setUser(null);
   };
 
   return (
@@ -28,22 +27,24 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         
-        {/* Hvis logget ind, kan man ikke gå til /login (sendes hjem) */}
+        {/* LOGIN RUTE: Hvis logget ind, send til forsiden. Ellers vis Login */}
         <Route 
           path="/login" 
           element={user ? <Navigate to="/" /> : <Login onLoginSuccess={handleLoginSuccess} />} 
         />
         
-        {/* Hvis IKKE logget ind, kan man ikke gå til /dashboard (sendes til login) */}
+        {/* DASHBOARD RUTE: Hvis logget ind, vis Dashboard. Ellers send til login */}
         <Route 
           path="/dashboard" 
-          element={user ? <Dashboard /> : <Navigate to="/login" />} 
+          element={user ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" />} 
         />
         
         <Route path="/book" element={<BookingPage />} />
+        
+        {/* REGISTER RUTE: Samme logik som login */}
         <Route 
           path="/register" 
-          element={user ? <Navigate to="/dashboard" /> : <Register onLoginSuccess={handleLoginSuccess} />} 
+          element={user ? <Navigate to="/" /> : <Register onLoginSuccess={handleLoginSuccess} />} 
         />
       </Routes>
     </BrowserRouter>
