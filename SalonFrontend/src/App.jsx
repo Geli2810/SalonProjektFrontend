@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import LandingPage from "./Store/Components/LandingPage";
 import Login from "./Store/Components/CustomerLogIn";
@@ -6,9 +6,8 @@ import Dashboard from "./Store/Components/CustomerDash";
 import BookingPage from "./Store/Components/BookingView";
 import FrisorLogin from "./Store/Components/FrisorLogin";
 import Register from "./Store/Components/Register";
-import AdminPanel from "./Store/Components/AdminPanel"; // Lav/tilføj denne!
+import AdminPanel from "./Store/Components/AdminPanel";
 import { getCurrentUser } from './SYSAdmin';
-
 
 function App() {
   const [currentUser, setCurrentUser] = useState(getCurrentUser());
@@ -18,16 +17,17 @@ function App() {
     else sessionStorage.setItem("user", JSON.stringify(userData));
     setCurrentUser(getCurrentUser());
   };
+
   const handleLogout = () => {
     sessionStorage.clear();
     setCurrentUser(null);
+    window.location.href = "/";
   };
 
   return (
     <BrowserRouter>
-      <nav>{/* ...Se ovenfor for rollebaseret menu... */}</nav>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage currentUser={currentUser} onLogout={handleLogout} />} />
         <Route path="/login" element={currentUser ? <Navigate to="/" /> : <Login onLoginSuccess={user => handleLoginSuccess(user, "kunde")} />} />
         <Route path="/register" element={currentUser ? <Navigate to="/" /> : <Register onLoginSuccess={user => handleLoginSuccess(user, "kunde")} />} />
         <Route path="/dashboard" element={currentUser?.rolle === "kunde" ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" />} />
