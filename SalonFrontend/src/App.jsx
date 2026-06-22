@@ -1,51 +1,40 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import { useState } from "react";
 import LandingPage from "./Store/Components/LandingPage";
 import Login from "./Store/Components/CustomerLogIn";
 import Dashboard from "./Store/Components/CustomerDash";
 import BookingPage from "./Store/Components/BookingView";
+import FrisorLogin from "./Store/Components/FrisorLogIn";
 import Register from "./Store/Components/Register";
+import AdminPanel from "./Store/Components/AdminPanel"; // Lav/tilføj denne!
+import { getCurrentUser } from './SYSAdmin';
+
 
 function App() {
-  // Vi læser status med det samme fra sessionStorage
-  const [user, setUser] = useState(() => {
-    const savedUser = sessionStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
 
-  const handleLoginSuccess = (userData) => {
-    setUser(userData);
+  const handleLoginSuccess = (userData, rolle = "kunde") => {
+    if (rolle === "frisor") sessionStorage.setItem("frisor", JSON.stringify(userData));
+    else sessionStorage.setItem("user", JSON.stringify(userData));
+    setCurrentUser(getCurrentUser());
   };
-
   const handleLogout = () => {
     sessionStorage.clear();
-    setUser(null);
+    setCurrentUser(null);
   };
 
   return (
     <BrowserRouter>
+      <nav>{/* ...Se ovenfor for rollebaseret menu... */}</nav>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        
-        {/* LOGIN RUTE: Hvis logget ind, send til forsiden. Ellers vis Login */}
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to="/" /> : <Login onLoginSuccess={handleLoginSuccess} />} 
-        />
-        
-        {/* DASHBOARD RUTE: Hvis logget ind, vis Dashboard. Ellers send til login */}
-        <Route 
-          path="/dashboard" 
-          element={user ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" />} 
-        />
-        
+        <Route path="/login" element={currentUser ? <Navigate to="/" /> : <Login onLoginSuccess={user => handleLoginSuccess(user, "kunde")} />} />
+        <Route path="/register" element={currentUser ? <Navigate to="/" /> : <Register onLoginSuccess={user => handleLoginSuccess(user, "kunde")} />} />
+        <Route path="/dashboard" element={currentUser?.rolle === "kunde" ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/book" element={<BookingPage />} />
-        
-        {/* REGISTER RUTE: Samme logik som login */}
-        <Route 
-          path="/register" 
-          element={user ? <Navigate to="/" /> : <Register onLoginSuccess={handleLoginSuccess} />} 
-        />
+        <Route path="/frisor-login" element={currentUser?.rolle === "frisor" ? <Navigate to="/admin" /> : <FrisorLogin onLoginSuccess={user => handleLoginSuccess(user, "frisor")} />} />
+        <Route path="/admin" element={currentUser?.rolle === "frisor" ? <AdminPanel onLogout={handleLogout} /> : <Navigate to="/frisor-login" />} />
+        <Route path="*" element={<div>404 – Siden findes ikke!</div>} />
       </Routes>
     </BrowserRouter>
   );

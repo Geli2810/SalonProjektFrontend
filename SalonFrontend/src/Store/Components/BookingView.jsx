@@ -5,15 +5,14 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import axios from 'axios';
 import { Calendar, Clock, User, Scissors, CheckCircle, LogOut, Mail } from 'lucide-react';
+import { getCurrentUser } from "../../SYSAdmin";
+
+
 
 const BookingPage = () => {
   const navigate = useNavigate();
   const API_URL = 'https://salonproject.onrender.com';
-
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = sessionStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
 
   const [frisorer, setFrisorer] = useState([]);
   const [behandlinger, setBehandlinger] = useState([]);
@@ -37,6 +36,21 @@ const BookingPage = () => {
     };
     loadData();
   }, [API_URL]);
+
+  
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
+  }, []);
+
+    if (currentUser?.rolle === "frisor") {
+    // Frisører skal ikke kunne booke som kunde
+    return (
+      <div style={{ padding: 32 }}>
+        <h1>Kun kunder kan booke tider.</h1>
+        <p>Gå til <Link to="/admin">frisørpanel</Link> for at administrere tider.</p>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (selectedFrisor) {
