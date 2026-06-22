@@ -24,8 +24,8 @@ export default function FrisorLogin({ onLoginSuccess }) {
 
       if (onLoginSuccess) onLoginSuccess({ ...frisorData, rolle: "frisor" }, "frisor");
       navigate("/admin");
-    } catch (e) {
-      setError(e.response?.data ?? "Login fejlede.");
+    } catch (err) {
+      setError(err.response?.data?.message ?? "Login fejlede.");
     }
   };
 
