@@ -4,7 +4,7 @@ import LandingPage from "./Store/Components/LandingPage";
 import Login from "./Store/Components/CustomerLogIn";
 import Dashboard from "./Store/Components/CustomerDash";
 import BookingPage from "./Store/Components/BookingView";
-import FrisorLogin from "./Store/Components/FrisorLogIn";
+import FrisorLogin from "./Store/Components/FrisorLogin";
 import Register from "./Store/Components/Register";
 import AdminPanel from "./Store/Components/AdminPanel"; // Lav/tilføj denne!
 import { getCurrentUser } from './SYSAdmin';
