@@ -32,11 +32,9 @@ const BookingPage = () => {
     return `${y}-${m}-${day}`;
   };
 
-  const todayDate = new Date();
-  const todayStr = localDateStr(todayDate);
-
+  const todayStr = localDateStr(new Date());
   const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate() + 7); // i dag + 7 dage
+  maxDate.setDate(maxDate.getDate() + 7);
   const maxDateStr = localDateStr(maxDate);
 
   const allEvents = [
@@ -77,35 +75,65 @@ const BookingPage = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Hent optagede tider + polling så alle kunder ser nye bookinger
   useEffect(() => {
-    if (selectedFrisor) {
-      axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${selectedFrisor}`)
-        .then(res => {
-          setOccupiedSlots(
-            res.data.map(slot => ({
-              id: `occ-${slot.startTid}`,
-              title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
-              start: slot.startTid,
-              end: slot.slutTid,
-              backgroundColor: slot.title?.toLowerCase().includes("skole") ? '#dc2626' : '#4b5563',
-              borderColor: 'transparent',
-              textColor: '#ffffff'
-            }))
-          );
-          setSelectedTime(null);
-        })
-        .catch(console.error);
-    } else {
+    if (!selectedFrisor) {
       setOccupiedSlots([]);
       setSelectedTime(null);
+      return;
     }
+
+    let isMounted = true;
+
+    const fetchOccupiedSlots = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${selectedFrisor}`);
+        if (!isMounted) return;
+
+        setOccupiedSlots(
+          res.data.map(slot => ({
+            id: `occ-${slot.startTid}`,
+            title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
+            start: slot.startTid,
+            end: slot.slutTid,
+            backgroundColor: slot.title?.toLowerCase().includes("skole") ? "#dc2626" : "#4b5563",
+            borderColor: "transparent",
+            textColor: "#ffffff"
+          }))
+        );
+      } catch (err) {
+        console.error("Kunne ikke hente occupied slots:", err);
+      }
+    };
+
+    fetchOccupiedSlots();
+    const intervalId = setInterval(fetchOccupiedSlots, 10000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
   }, [selectedFrisor]);
 
-  const isTuesday = (date) => date.getDay() === 2; // 2 = tirsdag
+  if (currentUser?.rolle === "frisor") {
+    return (
+      <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.2)", borderRadius: 24, padding: "48px", textAlign: "center", maxWidth: 400 }}>
+          <Scissors size={32} color="#378add" style={{ margin: "0 auto 20px", display: "block" }} />
+          <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Kun kunder kan booke tider</h1>
+          <Link to="/admin" style={{ background: "rgba(24,95,165,0.4)", border: "1px solid rgba(55,138,221,0.4)", color: "#85b7eb", padding: "12px 28px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 20, display: "inline-block" }}>
+            Gå til frisørpanel
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const isTuesday = (date) => date.getDay() === 2;
 
   const isInOpeningHours = (date) => {
     const total = date.getHours() * 60 + date.getMinutes();
-    return total >= 10 * 60 && total <= 18 * 60; // sidste starttid 18:00 ved 30 min slot
+    return total >= 10 * 60 && total <= 18 * 60;
   };
 
   const isInAllowedRange = (date) => {
@@ -142,7 +170,6 @@ const BookingPage = () => {
   };
 
   const handleDateClick = (info) => {
-    // Enkeltklik vælger 30 min slot
     const start = new Date(info.date);
     const end = new Date(start.getTime() + 30 * 60 * 1000);
 
@@ -158,22 +185,13 @@ const BookingPage = () => {
 
   const handleSelect = (info) => {
     if (!canPick(info.start, info.end)) return;
-    setSelectedTime(info);
+    setSelectedTime({
+      start: info.start,
+      end: info.end,
+      startStr: info.startStr,
+      endStr: info.endStr
+    });
   };
-
-  if (currentUser?.rolle === "frisor") {
-    return (
-      <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.2)", borderRadius: 24, padding: "48px", textAlign: "center", maxWidth: 400 }}>
-          <Scissors size={32} color="#378add" style={{ margin: "0 auto 20px", display: "block" }} />
-          <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Kun kunder kan booke tider</h1>
-          <Link to="/admin" style={{ background: "rgba(24,95,165,0.4)", border: "1px solid rgba(55,138,221,0.4)", color: "#85b7eb", padding: "12px 28px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 20, display: "inline-block" }}>
-            Gå til frisørpanel
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   const handleBooking = async (e) => {
     e.preventDefault();
@@ -190,6 +208,22 @@ const BookingPage = () => {
         navn: currentUser?.navn || "Gæst",
         telefon: currentUser?.telefon || "00000000"
       });
+
+      // Instant visning som optaget
+      setOccupiedSlots(prev => [
+        ...prev,
+        {
+          id: `occ-local-${Date.now()}`,
+          title: "OPTAGET",
+          start: selectedTime.startStr,
+          end: selectedTime.endStr,
+          backgroundColor: "#4b5563",
+          borderColor: "transparent",
+          textColor: "#ffffff"
+        }
+      ]);
+
+      setSelectedTime(null);
       setIsSuccess(true);
     } catch (err) {
       alert(err.response?.data?.message || "Kunne ikke bestille tid.");
@@ -395,7 +429,7 @@ const BookingPage = () => {
                   eventOverlap={false}
                   nowIndicator={true}
                   validRange={{ start: todayStr, end: maxDateStr }}
-                  hiddenDays={[2]} // tirsdag skjules
+                  hiddenDays={[2]}
                   businessHours={[
                     { daysOfWeek: [0, 1, 3, 4, 5, 6], startTime: "10:00", endTime: "18:30" }
                   ]}
