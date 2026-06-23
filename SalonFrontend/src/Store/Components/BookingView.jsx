@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import axios from 'axios';
-import { Calendar, Clock, Scissors, CheckCircle, LogOut, Mail } from 'lucide-react';
+import { Calendar, Clock, Scissors, CheckCircle, LogOut, Mail, RefreshCw } from 'lucide-react';
 import { getCurrentUser } from "../../SYSAdmin";
 
 const BookingPage = () => {
@@ -19,12 +19,15 @@ const BookingPage = () => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
+  const [dataLoading, setDataLoading] = useState(true);
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
 
   useEffect(() => {
     setCurrentUser(getCurrentUser());
   }, []);
 
   useEffect(() => {
+    const timer = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
     const loadData = async () => {
       try {
         const [fRes, bRes] = await Promise.all([
@@ -33,10 +36,16 @@ const BookingPage = () => {
         ]);
         setFrisorer(fRes.data);
         setBehandlinger(bRes.data);
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDataLoading(false);
+        clearInterval(timer);
+      }
     };
     loadData();
-  }, [API_URL]);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (selectedFrisor) {
@@ -47,7 +56,7 @@ const BookingPage = () => {
             start: slot.startTid,
             end: slot.slutTid,
             display: 'block',
-            backgroundColor: slot.title?.toLowerCase().includes("skole") ? '#ef4444' : '#64748b',
+            backgroundColor: slot.title?.toLowerCase().includes("skole") ? '#ef4444' : '#374151',
             borderColor: 'transparent',
             textColor: '#ffffff'
           }));
@@ -60,12 +69,12 @@ const BookingPage = () => {
 
   if (currentUser?.rolle === "frisor") {
     return (
-      <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center p-6">
-        <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-gray-50 text-center max-w-md">
-          <Scissors className="w-10 h-10 text-amber-800 mx-auto mb-6" />
-          <h1 className="text-2xl font-serif mb-4">Kun kunder kan booke tider</h1>
-          <p className="text-gray-400 text-sm mb-8">Gå til frisørpanelet for at administrere tider.</p>
-          <Link to="/admin" className="bg-[#1a1a1a] text-white px-8 py-4 rounded-2xl text-[10px] uppercase font-black tracking-widest hover:bg-amber-900 transition">
+      <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.2)", borderRadius: 24, padding: "48px", textAlign: "center", maxWidth: 400 }}>
+          <Scissors size={32} color="#378add" style={{ margin: "0 auto 20px" }} />
+          <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Kun kunder kan booke tider</h1>
+          <p style={{ color: "rgba(232,237,245,0.4)", fontSize: 13, marginBottom: 28 }}>Gå til frisørpanelet for at administrere tider.</p>
+          <Link to="/admin" style={{ background: "rgba(24,95,165,0.4)", border: "1px solid rgba(55,138,221,0.4)", color: "#85b7eb", padding: "12px 28px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
             Gå til frisørpanel
           </Link>
         </div>
@@ -104,14 +113,14 @@ const BookingPage = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center p-6 text-center">
-        <div className="max-w-xl w-full bg-white p-16 rounded-[3rem] shadow-2xl border border-gray-50">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
-          <h1 className="text-4xl font-serif mb-4 text-[#1a1a1a]">Tiden er din!</h1>
-          <p className="text-gray-500 mb-10 italic">Reservationen er gennemført. Vi har sendt en bekræftelse til din mail.</p>
-          <div className="flex flex-col gap-3">
-            <Link to="/" className="bg-black text-white py-5 rounded-2xl text-[10px] uppercase font-black hover:bg-amber-900 transition shadow-lg tracking-widest">Gå til forsiden</Link>
-            {currentUser && <Link to="/dashboard" className="text-gray-400 text-[10px] uppercase tracking-widest hover:text-black">Se mine aftaler</Link>}
+      <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ background: "rgba(15,110,86,0.1)", border: "1px solid rgba(93,202,165,0.2)", borderRadius: 28, padding: "64px 48px", textAlign: "center", maxWidth: 480 }}>
+          <CheckCircle size={48} color="#5dcaa5" style={{ margin: "0 auto 24px" }} />
+          <h1 style={{ fontSize: 32, fontWeight: 300, marginBottom: 12, letterSpacing: "-0.01em" }}>Tiden er din!</h1>
+          <p style={{ color: "rgba(232,237,245,0.45)", fontSize: 14, marginBottom: 40, lineHeight: 1.7 }}>Reservationen er gennemført. Vi har sendt en bekræftelse til din mail.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Link to="/" style={{ background: "#185fa5", color: "#e6f1fb", padding: "16px 32px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Gå til forsiden</Link>
+            {currentUser && <Link to="/dashboard" style={{ color: "rgba(232,237,245,0.35)", fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>Se mine aftaler</Link>}
           </div>
         </div>
       </div>
@@ -121,179 +130,263 @@ const BookingPage = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-sans">
+    <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
       <style>{`
+        /* RESET ALL FC BACKGROUND EVENTS */
+        .fc-bg-event,
+        .fc-timegrid-bg-harness,
+        .fc-timegrid-col-bg,
+        .fc-timegrid-bg-events,
+        .fc-non-business { display: none !important; }
+
+        /* BASE */
         .fc { font-family: 'Segoe UI', Arial, sans-serif !important; }
-        .fc .fc-toolbar { padding: 0 0 16px 0; }
-        .fc .fc-toolbar-title { font-size: 15px !important; font-weight: 600 !important; color: #1a1a1a !important; }
-        .fc .fc-button { background: #1a1a1a !important; border: none !important; border-radius: 10px !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; padding: 8px 14px !important; color: #fff !important; transition: background 0.2s !important; box-shadow: none !important; }
-        .fc .fc-button:hover, .fc .fc-button:focus { background: #92400e !important; outline: none !important; box-shadow: none !important; }
-        .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: #92400e !important; box-shadow: none !important; }
-        .fc .fc-timegrid-slot { height: 44px !important; border-color: #f0ede8 !important; }
-        .fc .fc-timegrid-slot-label { font-size: 11px !important; color: #9ca3af !important; font-weight: 500 !important; padding-right: 8px !important; }
-        .fc .fc-col-header-cell { padding: 10px 0 !important; background: #faf9f6 !important; border-bottom: 2px solid #f0ede8 !important; }
-        .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; color: #6b7280 !important; text-decoration: none !important; }
-        .fc .fc-timegrid-now-indicator-line { border-color: #b45309 !important; border-width: 2px !important; }
-        .fc .fc-timegrid-now-indicator-arrow { border-top-color: #b45309 !important; border-bottom-color: #b45309 !important; }
-        .fc-highlight { background: rgba(180, 83, 9, 0.08) !important; border: 2px solid #b45309 !important; border-radius: 8px !important; }
-        .fc-event { border-radius: 6px !important; padding: 2px 6px !important; font-size: 11px !important; font-weight: 600 !important; }
-        .fc-mirror { background: rgba(180, 83, 9, 0.12) !important; border: 2px dashed #b45309 !important; border-radius: 8px !important; }
-        .fc-bg-event { display: none !important; }
-        .fc-timegrid-bg-harness { display: none !important; }
-        .fc .fc-scrollgrid { border-color: #f0ede8 !important; border-radius: 12px !important; overflow: hidden; }
-        .fc td, .fc th { border-color: #f0ede8 !important; }
-        .fc .fc-day-today { background: rgba(180, 83, 9, 0.03) !important; }
-        .fc .fc-day-past { background: rgba(0,0,0,0.015) !important; }
-        .fc .fc-timegrid-axis { background: #faf9f6 !important; }
-        .fc-day-disabled { background: rgba(0,0,0,0.03) !important; cursor: not-allowed !important; }
+        .fc .fc-view-harness { background: transparent !important; }
+
+        /* TOOLBAR */
+        .fc .fc-toolbar { padding: 0 0 20px 0; }
+        .fc .fc-toolbar-title { font-size: 14px !important; font-weight: 600 !important; color: rgba(232,237,245,0.7) !important; letter-spacing: 0.05em !important; }
+        .fc .fc-button-group { gap: 6px; display: flex; }
+        .fc .fc-button {
+          background: rgba(24,95,165,0.25) !important;
+          border: 1px solid rgba(55,138,221,0.25) !important;
+          border-radius: 10px !important;
+          font-size: 10px !important;
+          font-weight: 700 !important;
+          letter-spacing: 0.12em !important;
+          text-transform: uppercase !important;
+          padding: 7px 14px !important;
+          color: rgba(133,183,235,0.8) !important;
+          transition: all 0.2s !important;
+          box-shadow: none !important;
+        }
+        .fc .fc-button:hover { background: rgba(24,95,165,0.45) !important; border-color: rgba(55,138,221,0.5) !important; box-shadow: none !important; }
+        .fc .fc-button:focus { box-shadow: none !important; outline: none !important; }
+        .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: rgba(24,95,165,0.6) !important; box-shadow: none !important; }
+        .fc .fc-today-button { opacity: 1 !important; }
+
+        /* GRID */
+        .fc .fc-scrollgrid { border: 1px solid rgba(55,138,221,0.1) !important; border-radius: 16px !important; overflow: hidden !important; }
+        .fc td, .fc th { border-color: rgba(55,138,221,0.08) !important; }
+        .fc .fc-scrollgrid-section > td { border: none !important; }
+
+        /* HEADER */
+        .fc .fc-col-header { background: rgba(8,12,20,0.8) !important; }
+        .fc .fc-col-header-cell { padding: 14px 0 !important; border-bottom: 1px solid rgba(55,138,221,0.12) !important; }
+        .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: rgba(232,237,245,0.35) !important; text-decoration: none !important; }
+        .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #378add !important; }
+
+        /* TIME SLOTS */
+        .fc .fc-timegrid-slot { height: 48px !important; border-color: rgba(55,138,221,0.06) !important; }
+        .fc .fc-timegrid-slot-minor { border-color: rgba(55,138,221,0.03) !important; }
+        .fc .fc-timegrid-slot-label { border: none !important; }
+        .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 500 !important; padding-right: 10px !important; }
+        .fc .fc-timegrid-axis { background: rgba(8,12,20,0.6) !important; border-right: 1px solid rgba(55,138,221,0.08) !important; }
+
+        /* TODAY */
+        .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
+
+        /* NOW INDICATOR */
+        .fc .fc-timegrid-now-indicator-line { border-color: #378add !important; border-width: 1.5px !important; }
+        .fc .fc-timegrid-now-indicator-arrow { border-top-color: #378add !important; border-bottom-color: #378add !important; }
+
+        /* SELECTION */
+        .fc-highlight { background: rgba(55,138,221,0.1) !important; border: 2px solid #378add !important; border-radius: 10px !important; }
+        .fc-mirror { background: rgba(55,138,221,0.12) !important; border: 2px dashed rgba(55,138,221,0.6) !important; border-radius: 10px !important; opacity: 0.8 !important; }
+
+        /* EVENTS */
+        .fc-event { border-radius: 8px !important; padding: 3px 8px !important; font-size: 11px !important; font-weight: 600 !important; overflow: hidden !important; max-width: 100% !important; box-sizing: border-box !important; }
+        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
+        .fc-timegrid-col-events { overflow: hidden !important; }
+
+        /* SCROLLBAR */
+        .fc-scroller::-webkit-scrollbar { width: 4px; }
+        .fc-scroller::-webkit-scrollbar-track { background: transparent; }
+        .fc-scroller::-webkit-scrollbar-thumb { background: rgba(55,138,221,0.2); border-radius: 4px; }
+
+        /* DISABLED DAYS */
+        .fc-day-disabled { background: rgba(0,0,0,0.15) !important; opacity: 0.4 !important; cursor: not-allowed !important; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+        .select-field {
+          width: 100%;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(55,138,221,0.18);
+          color: #e8edf5;
+          padding: 14px 18px;
+          border-radius: 14px;
+          font-size: 13px;
+          outline: none;
+          cursor: pointer;
+          transition: border 0.2s;
+          appearance: none;
+          -webkit-appearance: none;
+        }
+        .select-field:focus { border-color: rgba(55,138,221,0.5); }
+        .select-field option { background: #0f1623; color: #e8edf5; }
       `}</style>
 
-      <nav className="px-8 py-5 border-b border-gray-100 bg-white flex justify-between items-center sticky top-0 z-50 shadow-sm">
-        <Link to="/" className="text-xl font-serif tracking-[0.2em] uppercase">Salon Royale</Link>
-        <div className="flex gap-8 text-[10px] uppercase tracking-[0.2em] font-black items-center">
-          <Link to="/book" className="text-amber-800 border-b border-amber-800 pb-1">Booking</Link>
+      {/* NAVBAR */}
+      <nav style={{ background: "rgba(8,12,20,0.95)", borderBottom: "1px solid rgba(55,138,221,0.1)", padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
+        <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>Salon Royale</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+          <Link to="/book" style={{ color: "#378add", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none", borderBottom: "1px solid rgba(55,138,221,0.5)", paddingBottom: 2 }}>Booking</Link>
           {currentUser ? (
-            <div className="flex items-center gap-6 border-l border-gray-100 pl-6">
-              <Link to="/dashboard" className="hover:text-amber-800 transition">Min profil</Link>
-              <button onClick={handleLogout} className="text-red-600 flex items-center gap-1 font-bold uppercase">
-                <LogOut size={14} /> Log ud
+            <div style={{ display: "flex", alignItems: "center", gap: 20, borderLeft: "1px solid rgba(55,138,221,0.15)", paddingLeft: 20 }}>
+              <Link to="/dashboard" style={{ color: "rgba(232,237,245,0.5)", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>Min profil</Link>
+              <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(162,45,45,0.12)", border: "1px solid rgba(162,45,45,0.25)", color: "#f09595", padding: "7px 14px", borderRadius: 50, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}>
+                <LogOut size={12} /> Log ud
               </button>
             </div>
           ) : (
-            <Link to="/login" className="bg-black text-white px-4 py-2 rounded-full hover:bg-amber-900 transition">Log ind</Link>
+            <Link to="/login" style={{ background: "#185fa5", color: "#e6f1fb", padding: "9px 20px", borderRadius: 50, textDecoration: "none", fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>Log ind</Link>
           )}
         </div>
       </nav>
 
-      <div className="max-w-[1600px] mx-auto p-4 md:p-10 grid grid-cols-1 lg:grid-cols-4 gap-10">
-
-        <div className="lg:col-span-3 space-y-8">
-
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50">
-            <h2 className="text-xl font-serif mb-8 flex items-center gap-3">
-              <span className="bg-amber-50 p-2 rounded-full">
-                <Scissors className="w-5 h-5 text-amber-800" />
-              </span>
-              1. Vælg service
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <select
-                className="w-full p-5 bg-gray-50 border-none rounded-2xl outline-none focus:ring-2 ring-amber-800 cursor-pointer text-sm"
-                value={selectedFrisor}
-                onChange={(e) => { setSelectedFrisor(e.target.value); setSelectedTime(null); }}
-              >
-                <option value="">Vælg frisør</option>
-                {frisorer.map(f => <option key={f.frisorId} value={f.frisorId}>{f.navn}</option>)}
-              </select>
-              <select
-                className="w-full p-5 bg-gray-50 border-none rounded-2xl outline-none focus:ring-2 ring-amber-800 cursor-pointer text-sm"
-                value={selectedBehandling}
-                onChange={(e) => setSelectedBehandling(e.target.value)}
-              >
-                <option value="">Vælg behandling</option>
-                {behandlinger.map(b => <option key={b.behandlingId} value={b.behandlingId}>{b.navn} — {b.pris} kr.</option>)}
-              </select>
-            </div>
-          </div>
-
-          {selectedFrisor && selectedBehandling && (
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50">
-              <h2 className="text-xl font-serif mb-6 flex items-center gap-3">
-                <span className="bg-amber-50 p-2 rounded-full">
-                  <Calendar className="w-5 h-5 text-amber-800" />
-                </span>
-                2. Vælg en ledig tid
-              </h2>
-
-              <div className="flex gap-5 mb-6">
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <div style={{ width: 10, height: 10, borderRadius: 3, background: '#64748b' }} />
-                  Optaget
+      {/* BACKEND LOADING */}
+      {dataLoading && (
+        <div style={{ maxWidth: 900, margin: "60px auto", padding: "0 40px", textAlign: "center" }}>
+          <div style={{ background: "rgba(24,95,165,0.08)", border: "1px solid rgba(55,138,221,0.15)", borderRadius: 20, padding: "48px 32px" }}>
+            <RefreshCw size={28} color="#378add" className="spin" style={{ margin: "0 auto 16px", display: "block", animation: "spin 1s linear infinite" }} />
+            <p style={{ fontSize: 15, color: "rgba(232,237,245,0.7)", marginBottom: 8 }}>Forbinder til serveren...</p>
+            <p style={{ fontSize: 12, color: "rgba(232,237,245,0.3)", marginBottom: 20 }}>Serveren vågner op — dette tager typisk 20-40 sekunder</p>
+            {loadingSeconds > 5 && (
+              <div style={{ maxWidth: 300, margin: "0 auto" }}>
+                <div style={{ background: "rgba(55,138,221,0.1)", borderRadius: 50, height: 4, overflow: "hidden" }}>
+                  <div style={{ height: "100%", background: "#378add", borderRadius: 50, width: `${Math.min((loadingSeconds / 45) * 100, 95)}%`, transition: "width 1s ease" }} />
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <div style={{ width: 10, height: 10, borderRadius: 3, background: '#ef4444' }} />
-                  Skole
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <div style={{ width: 10, height: 10, borderRadius: 3, background: 'rgba(180,83,9,0.12)', border: '2px solid #b45309' }} />
-                  Din valgte tid
-                </div>
+                <p style={{ fontSize: 11, color: "rgba(55,138,221,0.6)", marginTop: 8 }}>
+                  {loadingSeconds < 20 ? "Starter server..." : loadingSeconds < 40 ? "Næsten klar..." : "Tager lidt længere end normalt..."}
+                </p>
               </div>
-
-              <FullCalendar
-                plugins={[timeGridPlugin, interactionPlugin]}
-                initialView="timeGridWeek"
-                allDaySlot={false}
-                slotMinTime="08:00:00"
-                slotMaxTime="18:00:00"
-                height="750px"
-                expandRows={true}
-                selectable={true}
-                selectOverlap={false}
-                selectMirror={true}
-                events={occupiedSlots}
-                select={(info) => setSelectedTime(info)}
-                locale="da"
-                nowIndicator={true}
-                validRange={{ start: today }}
-                headerToolbar={{
-                  left: 'prev,next today',
-                  center: 'title',
-                  right: 'timeGridDay,timeGridWeek'
-                }}
-                slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-                dayHeaderFormat={{ weekday: 'short', day: 'numeric', month: 'numeric' }}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="lg:col-span-1">
-          <div className={`bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-50 sticky top-28 transition-all duration-500 ${!selectedTime ? 'opacity-30 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
-            <h2 className="text-2xl font-serif mb-8 border-b border-gray-50 pb-6 tracking-tighter">Gennemfør</h2>
-            {selectedTime && (
-              <form onSubmit={handleBooking} className="space-y-6 text-sm">
-                <div className="bg-amber-50 p-5 rounded-2xl text-amber-900 border border-amber-100">
-                  <Clock size={16} className="mb-2 opacity-40" />
-                  <p className="font-bold text-sm">
-                    {new Date(selectedTime.startStr).toLocaleString('da-DK', {
-                      weekday: 'long', day: 'numeric', month: 'short',
-                      hour: '2-digit', minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-                {!currentUser ? (
-                  <div className="space-y-3">
-                    <p className="text-[10px] uppercase font-black text-amber-800 tracking-widest italic">Indtast mail for bekræftelse</p>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-                      <input
-                        required
-                        type="email"
-                        placeholder="din@email.dk"
-                        className="w-full bg-gray-50 border border-gray-100 p-4 pl-12 rounded-xl outline-none focus:ring-2 ring-amber-800 transition"
-                        onChange={(e) => setGuestEmail(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-green-50 border border-green-100 rounded-2xl text-green-900">
-                    <p className="text-[10px] uppercase font-black opacity-60 mb-1">Logget ind som</p>
-                    <p className="font-bold text-sm">{currentUser.navn}</p>
-                    <p className="text-xs opacity-70">{currentUser.email}</p>
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  className="w-full bg-[#1a1a1a] text-white py-5 rounded-2xl uppercase text-[10px] tracking-[0.4em] font-black hover:bg-amber-900 transition-all shadow-xl active:scale-95"
-                >
-                  Bestil tid nu
-                </button>
-              </form>
             )}
           </div>
         </div>
-      </div>
+      )}
+
+      {!dataLoading && (
+        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 40px", display: "grid", gridTemplateColumns: "1fr 340px", gap: 28 }}>
+
+          {/* VENSTRE */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+            {/* STEP 1 */}
+            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 20, padding: "28px 28px", animation: "fadeUp 0.5s ease forwards" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#85b7eb" }}>1</div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.7)", letterSpacing: "0.05em" }}>Vælg frisør og behandling</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                <div style={{ position: "relative" }}>
+                  <select className="select-field" value={selectedFrisor} onChange={e => { setSelectedFrisor(e.target.value); setSelectedTime(null); }}>
+                    <option value="">Vælg frisør</option>
+                    {frisorer.map(f => <option key={f.frisorId} value={f.frisorId}>{f.navn}</option>)}
+                  </select>
+                </div>
+                <div style={{ position: "relative" }}>
+                  <select className="select-field" value={selectedBehandling} onChange={e => setSelectedBehandling(e.target.value)}>
+                    <option value="">Vælg behandling</option>
+                    {behandlinger.map(b => <option key={b.behandlingId} value={b.behandlingId}>{b.navn} — {b.pris} kr.</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 2 — KALENDER */}
+            {selectedFrisor && selectedBehandling && (
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 20, padding: "28px", animation: "fadeUp 0.5s ease 0.1s forwards", opacity: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#85b7eb" }}>2</div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.7)", letterSpacing: "0.05em" }}>Vælg en ledig tid</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 16, fontSize: 11, color: "rgba(232,237,245,0.25)" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#374151", display: "inline-block" }} />Optaget</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#ef4444", display: "inline-block" }} />Skole</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(55,138,221,0.3)", border: "1.5px solid #378add", display: "inline-block" }} />Din tid</span>
+                  </div>
+                </div>
+
+                <FullCalendar
+                  plugins={[timeGridPlugin, interactionPlugin]}
+                  initialView="timeGridWeek"
+                  allDaySlot={false}
+                  slotMinTime="08:00:00"
+                  slotMaxTime="18:00:00"
+                  height="680px"
+                  expandRows={true}
+                  selectable={true}
+                  selectOverlap={false}
+                  selectMirror={true}
+                  events={occupiedSlots}
+                  select={(info) => setSelectedTime(info)}
+                  locale="da"
+                  nowIndicator={true}
+                  validRange={{ start: today }}
+                  headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridDay,timeGridWeek' }}
+                  slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+                  dayHeaderFormat={{ weekday: 'short', day: 'numeric', month: 'numeric' }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* HØJRE — GENNEMFØR */}
+          <div style={{ position: "sticky", top: 80, height: "fit-content" }}>
+            <div style={{
+              background: selectedTime ? "rgba(24,95,165,0.08)" : "rgba(255,255,255,0.02)",
+              border: `1px solid ${selectedTime ? "rgba(55,138,221,0.25)" : "rgba(55,138,221,0.08)"}`,
+              borderRadius: 20, padding: "28px",
+              transition: "all 0.4s ease",
+              opacity: selectedTime ? 1 : 0.4,
+              filter: selectedTime ? "none" : "blur(1px)",
+              pointerEvents: selectedTime ? "all" : "none"
+            }}>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: "#e8edf5", marginBottom: 24, letterSpacing: "0.02em" }}>Gennemfør booking</h2>
+
+              {selectedTime && (
+                <form onSubmit={handleBooking} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div style={{ background: "rgba(55,138,221,0.08)", border: "1px solid rgba(55,138,221,0.2)", borderRadius: 14, padding: "14px 16px" }}>
+                    <Clock size={13} color="rgba(55,138,221,0.5)" style={{ marginBottom: 6 }} />
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#e8edf5", lineHeight: 1.5 }}>
+                      {new Date(selectedTime.startStr).toLocaleString('da-DK', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+
+                  {!currentUser ? (
+                    <div>
+                      <p style={{ fontSize: 10, color: "rgba(55,138,221,0.6)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>Din email</p>
+                      <div style={{ position: "relative" }}>
+                        <Mail size={13} color="rgba(232,237,245,0.2)" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }} />
+                        <input
+                          required
+                          type="email"
+                          placeholder="din@email.dk"
+                          style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(55,138,221,0.18)", color: "#e8edf5", padding: "12px 14px 12px 36px", borderRadius: 12, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                          onChange={(e) => setGuestEmail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ background: "rgba(15,110,86,0.1)", border: "1px solid rgba(93,202,165,0.2)", borderRadius: 14, padding: "12px 16px" }}>
+                      <p style={{ fontSize: 10, color: "rgba(93,202,165,0.6)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 4 }}>Logget ind som</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#e8edf5" }}>{currentUser.navn}</p>
+                      <p style={{ fontSize: 11, color: "rgba(232,237,245,0.35)" }}>{currentUser.email}</p>
+                    </div>
+                  )}
+
+                  <button type="submit" style={{ width: "100%", background: "#185fa5", color: "#e6f1fb", padding: "16px", borderRadius: 14, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" }}>
+                    Bestil tid nu
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
