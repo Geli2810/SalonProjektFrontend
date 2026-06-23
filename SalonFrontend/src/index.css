@@ -2,7 +2,7 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* FullCalendar fixes */
+/* FullCalendar fixes - KUN basis reset */
 .fc-timegrid-slot {
   background-image: none !important;
   background-color: transparent !important;

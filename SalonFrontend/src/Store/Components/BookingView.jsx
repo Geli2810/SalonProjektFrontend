@@ -22,6 +22,9 @@ const BookingPage = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [loadingSeconds, setLoadingSeconds] = useState(0);
 
+  // Tirsdag = day 2 (0=søndag, 1=mandag, 2=tirsdag...)
+  const isTuesday = (date) => date.getDay() === 2;
+
   const allEvents = [
     ...occupiedSlots,
     ...(selectedTime ? [{
@@ -131,100 +134,281 @@ const BookingPage = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
       <style>{`
-        /* FJERN ALT GAMMELT */
-        .fc-timegrid-slot { background-image: none !important; background-color: transparent !important; }
-        .fc-non-business { display: none !important; }
-        .fc-bg-event { display: none !important; }
-
-        /* LEDIG via SVG baggrund paa hver dag-kolonne */
-        .fc .fc-timegrid-col.fc-day .fc-timegrid-col-frame {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2363b3ed' fill-opacity='0.35' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E");
-          background-repeat: repeat-y;
-          background-position: center top;
+        /* RESET */
+        .fc-timegrid-slot { 
+          background-image: none !important; 
+          background-color: transparent !important; 
         }
-        .fc .fc-timegrid-col.fc-day-disabled .fc-timegrid-col-frame { background-image: none; }
+        .fc-non-business, .fc-bg-event { 
+          display: none !important; 
+        }
+
+        /* "LEDIG" PÅ HVER KOLONNE */
+        .fc-timegrid-col-frame {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='28' font-family='Arial' font-weight='800' font-size='7' fill='%2363b3ed' fill-opacity='0.25' text-anchor='middle' letter-spacing='1.5'%3ELEDIG%3C/text%3E%3C/svg%3E") !important;
+          background-repeat: repeat-y !important;
+          background-position: center top !important;
+        }
+        
+        /* TIRSDAG - INGEN LEDIG */
+        .fc-day-tue .fc-timegrid-col-frame,
+        .fc-day-disabled .fc-timegrid-col-frame {
+          background-image: none !important;
+        }
 
         /* FIX EVENTS */
-        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
-        .fc-timegrid-col-events { overflow: hidden !important; margin: 0 2px !important; }
-        .fc-event { max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; border-radius: 8px !important; padding: 4px 8px !important; font-size: 11px !important; font-weight: 700 !important; }
+        .fc-timegrid-event-harness { 
+          overflow: hidden !important; 
+          max-width: 100% !important; 
+        }
+        .fc-timegrid-col-events { 
+          overflow: hidden !important; 
+          margin: 0 2px !important; 
+        }
+        .fc-event { 
+          max-width: 100% !important; 
+          overflow: hidden !important; 
+          box-sizing: border-box !important; 
+          border-radius: 8px !important; 
+          padding: 4px 8px !important; 
+          font-size: 10px !important; 
+          font-weight: 700 !important; 
+        }
 
         /* BASE */
-        .fc { font-family: 'Segoe UI', Arial, sans-serif !important; }
-        .fc .fc-view-harness { background: transparent !important; }
-        .fc .fc-toolbar { padding: 0 0 20px 0; }
-        .fc .fc-toolbar-title { font-size: 13px !important; font-weight: 600 !important; color: rgba(232,237,245,0.6) !important; }
+        .fc { 
+          font-family: 'Segoe UI', Arial, sans-serif !important; 
+        }
+        .fc .fc-view-harness { 
+          background: transparent !important; 
+        }
+        .fc .fc-toolbar { 
+          padding: 0 0 20px 0; 
+        }
+        .fc .fc-toolbar-title { 
+          font-size: 13px !important; 
+          font-weight: 600 !important; 
+          color: rgba(232,237,245,0.6) !important; 
+        }
 
         /* KNAPPER */
-        .fc .fc-button { background: rgba(24,95,165,0.2) !important; border: 1px solid rgba(55,138,221,0.2) !important; border-radius: 10px !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; padding: 7px 14px !important; color: rgba(133,183,235,0.7) !important; box-shadow: none !important; transition: all 0.2s !important; }
-        .fc .fc-button:hover { background: rgba(24,95,165,0.4) !important; box-shadow: none !important; }
-        .fc .fc-button:focus { box-shadow: none !important; outline: none !important; }
-        .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: rgba(24,95,165,0.55) !important; box-shadow: none !important; }
+        .fc .fc-button { 
+          background: rgba(24,95,165,0.2) !important; 
+          border: 1px solid rgba(55,138,221,0.2) !important; 
+          border-radius: 10px !important; 
+          font-size: 10px !important; 
+          font-weight: 700 !important; 
+          letter-spacing: 0.12em !important; 
+          text-transform: uppercase !important; 
+          padding: 7px 14px !important; 
+          color: rgba(133,183,235,0.7) !important; 
+          box-shadow: none !important; 
+          transition: all 0.2s !important; 
+        }
+        .fc .fc-button:hover { 
+          background: rgba(24,95,165,0.4) !important; 
+          box-shadow: none !important; 
+        }
+        .fc .fc-button:focus { 
+          box-shadow: none !important; 
+          outline: none !important; 
+        }
+        .fc .fc-button-active, 
+        .fc .fc-button:not(:disabled):active { 
+          background: rgba(24,95,165,0.55) !important; 
+          box-shadow: none !important; 
+        }
 
         /* GRID */
-        .fc .fc-scrollgrid { border: 1px solid rgba(55,138,221,0.1) !important; border-radius: 16px !important; overflow: hidden !important; }
-        .fc td, .fc th { border-color: rgba(55,138,221,0.07) !important; }
-        .fc .fc-scrollgrid-section > td { border: none !important; }
+        .fc .fc-scrollgrid { 
+          border: 1px solid rgba(55,138,221,0.1) !important; 
+          border-radius: 16px !important; 
+          overflow: hidden !important; 
+        }
+        .fc td, .fc th { 
+          border-color: rgba(55,138,221,0.07) !important; 
+        }
+        .fc .fc-scrollgrid-section > td { 
+          border: none !important; 
+        }
 
         /* HEADER */
-        .fc .fc-col-header { background: rgba(8,12,20,0.9) !important; }
-        .fc .fc-col-header-cell { padding: 12px 0 !important; border-bottom: 1px solid rgba(55,138,221,0.1) !important; }
-        .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: rgba(232,237,245,0.3) !important; text-decoration: none !important; }
-        .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #60a5fa !important; }
+        .fc .fc-col-header { 
+          background: rgba(8,12,20,0.9) !important; 
+        }
+        .fc .fc-col-header-cell { 
+          padding: 12px 0 !important; 
+          border-bottom: 1px solid rgba(55,138,221,0.1) !important; 
+        }
+        .fc .fc-col-header-cell-cushion { 
+          font-size: 11px !important; 
+          font-weight: 700 !important; 
+          letter-spacing: 0.1em !important; 
+          text-transform: uppercase !important; 
+          color: rgba(232,237,245,0.3) !important; 
+          text-decoration: none !important; 
+        }
+        .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { 
+          color: #60a5fa !important; 
+        }
+        
+        /* TIRSDAG HEADER */
+        .fc-day-tue .fc-col-header-cell-cushion {
+          color: rgba(220,38,38,0.4) !important;
+        }
 
         /* SLOTS */
-        .fc .fc-timegrid-slot { height: 52px !important; border-color: rgba(55,138,221,0.05) !important; }
-        .fc .fc-timegrid-slot-minor { border-color: rgba(55,138,221,0.02) !important; }
-        .fc .fc-timegrid-slot-label { border: none !important; }
-        .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 600 !important; padding-right: 10px !important; }
-        .fc .fc-timegrid-axis { background: rgba(8,12,20,0.7) !important; border-right: 1px solid rgba(55,138,221,0.07) !important; }
+        .fc .fc-timegrid-slot { 
+          height: 52px !important; 
+          border-color: rgba(55,138,221,0.05) !important; 
+        }
+        .fc .fc-timegrid-slot-minor { 
+          border-color: rgba(55,138,221,0.02) !important; 
+        }
+        .fc .fc-timegrid-slot-label { 
+          border: none !important; 
+        }
+        .fc .fc-timegrid-slot-label-cushion { 
+          font-size: 10px !important; 
+          color: rgba(232,237,245,0.2) !important; 
+          font-weight: 600 !important; 
+          padding-right: 10px !important; 
+        }
+        .fc .fc-timegrid-axis { 
+          background: rgba(8,12,20,0.7) !important; 
+          border-right: 1px solid rgba(55,138,221,0.07) !important; 
+        }
 
         /* I DAG */
-        .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
-        .fc .fc-day-today .fc-timegrid-col-frame { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2360a5fa' fill-opacity='0.45' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E") !important; }
+        .fc .fc-day-today { 
+          background: rgba(55,138,221,0.03) !important; 
+        }
 
         /* NU INDIKATOR */
-        .fc .fc-timegrid-now-indicator-line { border-color: #60a5fa !important; border-width: 2px !important; }
-        .fc .fc-timegrid-now-indicator-arrow { border-top-color: #60a5fa !important; border-bottom-color: #60a5fa !important; }
-
-        /* SELECTION — kun i den specifikke kolonne */
-        .fc-highlight {
-          background: rgba(29,78,216,0.35) !important;
-          border: 2px solid #3b82f6 !important;
-          border-radius: 8px !important;
-          box-shadow: 0 0 16px rgba(59,130,246,0.5) !important;
+        .fc .fc-timegrid-now-indicator-line { 
+          border-color: #60a5fa !important; 
+          border-width: 2px !important; 
         }
-        .fc-mirror {
-          background: rgba(29,78,216,0.4) !important;
-          border: 2px solid #3b82f6 !important;
-          border-radius: 8px !important;
+        .fc .fc-timegrid-now-indicator-arrow { 
+          border-top-color: #60a5fa !important; 
+          border-bottom-color: #60a5fa !important; 
+        }
+
+        /* === KLIK SELECTION - DEN VIGTIGE DEL === */
+        .fc-highlight {
+          background: rgba(29,78,216,0.45) !important;
+          border: 3px solid #3b82f6 !important;
+          border-radius: 6px !important;
+          box-shadow: 0 0 25px rgba(59,130,246,0.7), inset 0 0 20px rgba(59,130,246,0.3) !important;
+          animation: highlight-pulse 1.5s ease-in-out infinite !important;
+          display: block !important;
+          visibility: visible !important;
           opacity: 1 !important;
-          box-shadow: 0 0 16px rgba(59,130,246,0.5) !important;
+          z-index: 5 !important;
+        }
+        
+        @keyframes highlight-pulse {
+          0%, 100% { 
+            box-shadow: 0 0 20px rgba(59,130,246,0.5), inset 0 0 15px rgba(59,130,246,0.2); 
+            border-color: #3b82f6;
+          }
+          50% { 
+            box-shadow: 0 0 35px rgba(59,130,246,0.9), inset 0 0 30px rgba(59,130,246,0.4); 
+            border-color: #60a5fa;
+          }
+        }
+        
+        .fc-mirror {
+          background: rgba(29,78,216,0.5) !important;
+          border: 3px solid #3b82f6 !important;
+          border-radius: 6px !important;
+          opacity: 1 !important;
+          box-shadow: 0 0 30px rgba(59,130,246,0.8) !important;
+          z-index: 10 !important;
         }
 
         /* VALGT TID */
         .selected-event {
-          box-shadow: 0 0 0 2px #60a5fa, 0 4px 20px rgba(29,78,216,0.5) !important;
+          box-shadow: 0 0 0 3px #60a5fa, 0 4px 25px rgba(29,78,216,0.6) !important;
           animation: pulse-blue 2s ease-in-out infinite !important;
+          font-size: 11px !important;
+          text-align: center !important;
+          z-index: 8 !important;
         }
         @keyframes pulse-blue {
-          0%, 100% { box-shadow: 0 0 0 2px #60a5fa, 0 4px 16px rgba(29,78,216,0.4); }
-          50% { box-shadow: 0 0 0 4px rgba(96,165,250,0.4), 0 4px 28px rgba(29,78,216,0.6); }
+          0%, 100% { 
+            box-shadow: 0 0 0 3px #60a5fa, 0 4px 20px rgba(29,78,216,0.5); 
+          }
+          50% { 
+            box-shadow: 0 0 0 6px rgba(96,165,250,0.5), 0 4px 35px rgba(29,78,216,0.8); 
+          }
         }
 
-        /* DISABLED */
-        .fc-day-disabled { background: rgba(0,0,0,0.2) !important; opacity: 0.25 !important; }
+        /* TIRSDAG - DISABLED */
+        .fc-day-tue {
+          background: rgba(220,38,38,0.05) !important;
+          opacity: 0.4 !important;
+          cursor: not-allowed !important;
+          pointer-events: none !important;
+        }
+        .fc-day-tue::after {
+          content: 'LUKKET';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(-45deg);
+          font-size: 14px;
+          font-weight: 900;
+          color: rgba(220,38,38,0.3);
+          letter-spacing: 0.2em;
+          white-space: nowrap;
+          z-index: 2;
+          pointer-events: none;
+        }
+
+        /* DISABLED DAGE GENERELT */
+        .fc-day-disabled { 
+          background: rgba(0,0,0,0.3) !important; 
+          opacity: 0.2 !important; 
+        }
 
         /* SCROLLBAR */
         .fc-scroller::-webkit-scrollbar { width: 3px; }
-        .fc-scroller::-webkit-scrollbar-thumb { background: rgba(55,138,221,0.15); border-radius: 4px; }
+        .fc-scroller::-webkit-scrollbar-thumb { 
+          background: rgba(55,138,221,0.15); 
+          border-radius: 4px; 
+        }
 
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fadeUp { 
+          from { opacity: 0; transform: translateY(16px); } 
+          to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes spin { 
+          from { transform: rotate(0deg); } 
+          to { transform: rotate(360deg); } 
+        }
 
-        .select-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.15); color: #e8edf5; padding: 14px 18px; border-radius: 14px; font-size: 13px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; transition: border 0.2s; }
-        .select-field:focus { border-color: rgba(55,138,221,0.45); }
-        .select-field option { background: #0f1623; color: #e8edf5; }
+        .select-field { 
+          width: 100%; 
+          background: rgba(255,255,255,0.04); 
+          border: 1px solid rgba(55,138,221,0.15); 
+          color: #e8edf5; 
+          padding: 14px 18px; 
+          border-radius: 14px; 
+          font-size: 13px; 
+          outline: none; 
+          cursor: pointer; 
+          appearance: none; 
+          -webkit-appearance: none; 
+          transition: border 0.2s; 
+        }
+        .select-field:focus { 
+          border-color: rgba(55,138,221,0.45); 
+        }
+        .select-field option { 
+          background: #0f1623; 
+          color: #e8edf5; 
+        }
       `}</style>
 
       {/* NAVBAR */}
@@ -261,9 +445,7 @@ const BookingPage = () => {
 
       {!dataLoading && (
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 40px", display: "grid", gridTemplateColumns: "1fr 320px", gap: 24 }}>
-
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
             {/* STEP 1 */}
             <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "24px 28px", animation: "fadeUp 0.5s ease forwards" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
@@ -310,12 +492,35 @@ const BookingPage = () => {
                   selectMirror={true}
                   events={allEvents}
                   select={(info) => setSelectedTime(info)}
+                  selectAllow={(selectInfo) => {
+                    // FORHINDRER KLIK PÅ TIRSDAG
+                    return !isTuesday(selectInfo.start);
+                  }}
                   locale="da"
                   nowIndicator={true}
                   validRange={{ start: today }}
-                  headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridDay,timeGridWeek' }}
-                  slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-                  dayHeaderFormat={{ weekday: 'short', day: 'numeric', month: 'numeric' }}
+                  headerToolbar={{ 
+                    left: 'prev,next today', 
+                    center: 'title', 
+                    right: 'timeGridDay,timeGridWeek' 
+                  }}
+                  slotLabelFormat={{ 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    hour12: false 
+                  }}
+                  dayHeaderFormat={{ 
+                    weekday: 'short', 
+                    day: 'numeric', 
+                    month: 'numeric' 
+                  }}
+                  dayCellClassNames={(arg) => {
+                    // TILFØJER KLASSE TIL TIRSDAG
+                    if (isTuesday(arg.date)) {
+                      return ['fc-day-tue'];
+                    }
+                    return [];
+                  }}
                 />
               </div>
             )}
