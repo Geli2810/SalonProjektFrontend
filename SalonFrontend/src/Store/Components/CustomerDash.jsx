@@ -19,24 +19,10 @@ export default function CustomerDash() {
     if (!savedUser) { navigate("/login"); return; }
     const parsedUser = JSON.parse(savedUser);
     setUser(parsedUser);
-
-    // Timer der tæller sekunder mens backend vågner op
     const timer = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
-
     axios.get(`${API_URL}/api/Booking/user/${parsedUser.kundeId}`)
-      .then(res => {
-        setMyBookings(res.data);
-        setLoading(false);
-        setBackendLoading(false);
-        clearInterval(timer);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-        setBackendLoading(false);
-        clearInterval(timer);
-      });
-
+      .then(res => { setMyBookings(res.data); setLoading(false); setBackendLoading(false); clearInterval(timer); })
+      .catch(err => { console.error(err); setLoading(false); setBackendLoading(false); clearInterval(timer); });
     return () => clearInterval(timer);
   }, [navigate]);
 
@@ -44,10 +30,7 @@ export default function CustomerDash() {
     if (!user || user.rolle !== "kunde") navigate("/login");
   }, [user, navigate]);
 
-  const handleLogout = () => {
-    sessionStorage.clear();
-    navigate("/");
-  };
+  const handleLogout = () => { sessionStorage.clear(); navigate("/"); };
 
   if (!user) return null;
 
@@ -55,156 +38,114 @@ export default function CustomerDash() {
   const tidligere = myBookings.filter(b => new Date(b.startTid) < new Date() || b.status === "aflyst");
 
   const statusStyle = (status) => {
-    if (status === "booket") return "bg-green-50 text-green-700 border-green-100";
-    if (status === "aflyst") return "bg-red-50 text-red-600 border-red-100";
-    return "bg-gray-50 text-gray-500 border-gray-100";
+    if (status === "booket") return { bg: "rgba(15,110,86,0.15)", color: "#5dcaa5", border: "rgba(15,110,86,0.3)" };
+    if (status === "aflyst") return { bg: "rgba(162,45,45,0.15)", color: "#f09595", border: "rgba(162,45,45,0.3)" };
+    return { bg: "rgba(55,138,221,0.15)", color: "#85b7eb", border: "rgba(55,138,221,0.3)" };
+  };
+
+  const BookingCard = ({ b, faded }) => {
+    const sc = statusStyle(b.status);
+    return (
+      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, opacity: faded ? 0.5 : 1, transition: "all 0.2s" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <div style={{ width: 48, height: 48, background: faded ? "rgba(255,255,255,0.04)" : "rgba(24,95,165,0.15)", border: `1px solid ${faded ? "rgba(255,255,255,0.08)" : "rgba(55,138,221,0.25)"}`, borderRadius: 14, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: faded ? "rgba(232,237,245,0.4)" : "#85b7eb", flexShrink: 0 }}>
+            <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", lineHeight: 1 }}>{new Date(b.startTid).toLocaleString('da-DK', { month: 'short' })}</span>
+            <span style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, marginTop: 2 }}>{new Date(b.startTid).getDate()}</span>
+          </div>
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 600, color: faded ? "rgba(232,237,245,0.5)" : "#e8edf5" }}>{b.behandlingNavn || "Service"}</p>
+            <p style={{ fontSize: 11, color: "rgba(232,237,245,0.35)", display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+              <Clock size={10} /> kl. {new Date(b.startTid).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+        </div>
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", padding: "6px 14px", borderRadius: 50, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>{b.status}</span>
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-sans">
+    <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "transparent", color: "#e8edf5", minHeight: "100vh" }}>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }`}</style>
 
       {/* NAVBAR */}
-      <nav className="px-8 py-5 border-b border-gray-100 bg-white flex justify-between items-center sticky top-0 z-50 shadow-sm">
-        <Link to="/" className="text-xl font-serif tracking-[0.2em] uppercase">Salon Royale</Link>
-        <div className="flex gap-6 text-[10px] uppercase tracking-[0.2em] font-black items-center">
-          <Link to="/book" className="hover:text-amber-800 transition">Book tid</Link>
-          <button onClick={handleLogout} className="text-red-500 flex items-center gap-1 hover:text-red-700 transition">
-            <LogOut size={13} /> Log ud
+      <nav style={{ background: "rgba(8,12,20,0.85)", borderBottom: "1px solid rgba(55,138,221,0.1)", padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
+        <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>Salon Royale</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <Link to="/book" style={{ color: "rgba(232,237,245,0.5)", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>Book tid</Link>
+          <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(162,45,45,0.12)", border: "1px solid rgba(162,45,45,0.2)", color: "#f09595", padding: "7px 14px", borderRadius: 50, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}>
+            <LogOut size={12} /> Log ud
           </button>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto p-6 md:p-10">
-
-        {/* HEADER */}
-        <div className="mb-10">
-          <p className="text-[10px] uppercase tracking-[0.4em] text-amber-800 font-bold mb-2">Velkommen tilbage</p>
-          <h1 className="text-4xl font-serif tracking-tight">Min Profil</h1>
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px" }}>
+        <div style={{ marginBottom: 36, animation: "fadeUp 0.5s ease forwards" }}>
+          <p style={{ fontSize: 11, color: "#378add", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 8 }}>Velkommen tilbage</p>
+          <h1 style={{ fontSize: 36, fontWeight: 300, letterSpacing: "-0.01em" }}>Min profil</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
+        <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 28 }}>
           {/* PROFIL KORT */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-              <div className="h-1.5 bg-amber-800 w-full" />
-              <div className="p-8 text-center">
-                <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-amber-100">
-                  <User size={30} className="text-amber-800" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 24, overflow: "hidden" }}>
+              <div style={{ height: 4, background: "linear-gradient(90deg, #185fa5, #378add)" }} />
+              <div style={{ padding: 32, textAlign: "center" }}>
+                <div style={{ width: 72, height: 72, background: "rgba(24,95,165,0.15)", border: "1px solid rgba(55,138,221,0.25)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
+                  <User size={28} color="#85b7eb" />
                 </div>
-                <h2 className="text-xl font-serif uppercase tracking-tight mb-1">{user.navn}</h2>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest italic mb-6">Medlem</p>
-                <div className="space-y-3 text-left border-t border-gray-50 pt-6 text-sm text-gray-600">
-                  <div className="flex items-center gap-3">
-                    <Mail size={13} className="text-gray-300 shrink-0" />
-                    <span className="truncate">{user.email}</span>
+                <h2 style={{ fontSize: 19, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{user.navn}</h2>
+                <p style={{ fontSize: 10, color: "rgba(232,237,245,0.3)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 24 }}>Medlem</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left", borderTop: "1px solid rgba(55,138,221,0.1)", paddingTop: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: "rgba(232,237,245,0.6)" }}>
+                    <Mail size={13} color="rgba(232,237,245,0.3)" /> <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{user.email}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Phone size={13} className="text-gray-300 shrink-0" />
-                    <span>{user.telefon || "Ikke oplyst"}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: "rgba(232,237,245,0.6)" }}>
+                    <Phone size={13} color="rgba(232,237,245,0.3)" /> <span>{user.telefon || "Ikke oplyst"}</span>
                   </div>
                 </div>
               </div>
             </div>
-
-            <Link to="/book" className="block w-full bg-[#1a1a1a] text-white py-4 rounded-2xl text-[10px] uppercase font-black tracking-[0.3em] hover:bg-amber-900 transition text-center shadow-lg">
+            <Link to="/book" style={{ display: "block", width: "100%", background: "linear-gradient(135deg, #1d4ed8, #2563eb)", color: "#e6f1fb", padding: "15px", borderRadius: 14, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", textAlign: "center", textDecoration: "none", boxSizing: "border-box", boxShadow: "0 4px 20px rgba(29,78,216,0.3)" }}>
               Book ny tid
             </Link>
           </div>
 
           {/* BOOKINGER */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* BACKEND LOADING STATE */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             {backendLoading && (
-              <div className="bg-white rounded-[2rem] border border-gray-100 p-10 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <RefreshCw size={28} className="text-amber-800 animate-spin" />
-                  <div>
-                    <p className="font-serif text-lg text-gray-700 mb-1">Forbinder til serveren...</p>
-                    <p className="text-xs text-gray-400 italic">Serveren vågner op — dette tager typisk 20-40 sekunder</p>
-                    {loadingSeconds > 5 && (
-                      <div className="mt-4 bg-amber-50 border border-amber-100 rounded-xl px-5 py-3">
-                        <p className="text-[11px] text-amber-800 font-medium">
-                          {loadingSeconds < 20 ? "Starter server..." : loadingSeconds < 40 ? "Næsten klar..." : "Tager lidt længere end normalt..."}
-                        </p>
-                        <div className="mt-2 h-1 bg-amber-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-amber-800 rounded-full transition-all duration-1000"
-                            style={{ width: `${Math.min((loadingSeconds / 45) * 100, 95)}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              <div style={{ background: "rgba(24,95,165,0.07)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 20, padding: "40px 32px", textAlign: "center" }}>
+                <RefreshCw size={26} color="#378add" style={{ margin: "0 auto 16px", display: "block", animation: "spin 1s linear infinite" }} />
+                <p style={{ fontSize: 15, color: "rgba(232,237,245,0.65)", marginBottom: 6 }}>Forbinder til serveren...</p>
+                <p style={{ fontSize: 12, color: "rgba(232,237,245,0.25)", marginBottom: 20 }}>Typisk 20-40 sekunder</p>
+                <div style={{ background: "rgba(55,138,221,0.08)", borderRadius: 50, height: 3, overflow: "hidden", maxWidth: 260, margin: "0 auto" }}>
+                  <div style={{ height: "100%", background: "linear-gradient(90deg, #185fa5, #378add)", borderRadius: 50, width: `${Math.min((loadingSeconds / 45) * 100, 95)}%`, transition: "width 1s ease" }} />
                 </div>
               </div>
             )}
 
-            {/* KOMMENDE AFTALER */}
             {!backendLoading && (
               <>
                 <div>
-                  <h3 className="text-sm font-serif flex items-center gap-2 mb-4 text-gray-700">
-                    <Scissors size={16} className="text-amber-800" /> Kommende aftaler
-                    {kommende.length > 0 && (
-                      <span className="bg-amber-800 text-white text-[9px] font-black px-2 py-0.5 rounded-full">{kommende.length}</span>
-                    )}
+                  <h3 style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                    <Scissors size={15} color="#378add" /> Kommende aftaler
+                    {kommende.length > 0 && <span style={{ background: "#185fa5", color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 8px", borderRadius: 50 }}>{kommende.length}</span>}
                   </h3>
-
                   {kommende.length === 0 ? (
-                    <div className="bg-white rounded-[2rem] border border-dashed border-gray-100 p-12 text-center">
-                      <Scissors size={24} className="text-gray-200 mx-auto mb-3" />
-                      <p className="font-serif text-gray-400 italic text-sm">Du har ingen kommende aftaler.</p>
-                      <Link to="/book" className="text-[10px] text-amber-800 uppercase font-black tracking-widest mt-3 inline-block hover:underline">Book en tid nu</Link>
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(55,138,221,0.15)", borderRadius: 20, padding: 48, textAlign: "center" }}>
+                      <Scissors size={24} color="rgba(232,237,245,0.15)" style={{ margin: "0 auto 12px", display: "block" }} />
+                      <p style={{ fontSize: 14, color: "rgba(232,237,245,0.35)", fontStyle: "italic", marginBottom: 12 }}>Du har ingen kommende aftaler.</p>
+                      <Link to="/book" style={{ fontSize: 10, color: "#378add", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>Book en tid nu</Link>
                     </div>
-                  ) : kommende.map(b => (
-                    <div key={b.bookingId} className="bg-white p-5 rounded-[1.5rem] border border-gray-50 shadow-sm flex items-center justify-between hover:shadow-md transition-all mb-3">
-                      <div className="flex items-center gap-5">
-                        <div className="w-12 h-12 bg-amber-50 rounded-xl flex flex-col items-center justify-center text-amber-800 border border-amber-100 shrink-0">
-                          <span className="text-[9px] uppercase font-black leading-none">{new Date(b.startTid).toLocaleString('da-DK', {month: 'short'})}</span>
-                          <span className="text-lg font-bold leading-none mt-0.5">{new Date(b.startTid).getDate()}</span>
-                        </div>
-                        <div>
-                          <p className="font-serif text-base">{b.behandlingNavn || "Service"}</p>
-                          <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
-                            <Clock size={9} className="text-amber-700" />
-                            kl. {new Date(b.startTid).toLocaleTimeString('da-DK', {hour:'2-digit', minute:'2-digit'})}
-                          </p>
-                        </div>
-                      </div>
-                      <span className={`text-[9px] uppercase tracking-[0.2em] font-black px-4 py-2 rounded-full border ${statusStyle(b.status)}`}>
-                        {b.status}
-                      </span>
-                    </div>
-                  ))}
+                  ) : kommende.map(b => <BookingCard key={b.bookingId} b={b} />)}
                 </div>
 
-                {/* TIDLIGERE AFTALER */}
                 {tidligere.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-serif flex items-center gap-2 mb-4 text-gray-400">
-                      <Clock size={16} /> Tidligere aftaler
+                    <h3 style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.35)", letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                      <Clock size={15} /> Tidligere aftaler
                     </h3>
-                    {tidligere.map(b => (
-                      <div key={b.bookingId} className="bg-white p-5 rounded-[1.5rem] border border-gray-50 shadow-sm flex items-center justify-between opacity-50 mb-3">
-                        <div className="flex items-center gap-5">
-                          <div className="w-12 h-12 bg-gray-50 rounded-xl flex flex-col items-center justify-center text-gray-400 border border-gray-100 shrink-0">
-                            <span className="text-[9px] uppercase font-black leading-none">{new Date(b.startTid).toLocaleString('da-DK', {month: 'short'})}</span>
-                            <span className="text-lg font-bold leading-none mt-0.5">{new Date(b.startTid).getDate()}</span>
-                          </div>
-                          <div>
-                            <p className="font-serif text-base text-gray-500">{b.behandlingNavn || "Service"}</p>
-                            <p className="text-[11px] text-gray-300 flex items-center gap-1 mt-0.5">
-                              <Clock size={9} /> kl. {new Date(b.startTid).toLocaleTimeString('da-DK', {hour:'2-digit', minute:'2-digit'})}
-                            </p>
-                          </div>
-                        </div>
-                        <span className={`text-[9px] uppercase tracking-[0.2em] font-black px-4 py-2 rounded-full border ${statusStyle(b.status)}`}>
-                          {b.status}
-                        </span>
-                      </div>
-                    ))}
+                    {tidligere.map(b => <BookingCard key={b.bookingId} b={b} faded />)}
                   </div>
                 )}
               </>
