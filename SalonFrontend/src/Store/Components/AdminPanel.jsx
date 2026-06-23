@@ -298,9 +298,21 @@ export default function AdminPanel({ onLogout }) {
               events={kalenderEvents}
               locale="da"
               nowIndicator={true}
-              headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridDay,timeGridWeek' }}
-              slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-              dayHeaderFormat={{ weekday: 'short', day: 'numeric', month: 'numeric' }}
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'timeGridDay,timeGridWeek'
+              }}
+              slotLabelFormat={{
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              }}
+              dayHeaderFormat={{
+                weekday: 'short',
+                day: 'numeric',
+                month: 'numeric'
+              }}
             />
           </div>
         )}
@@ -369,35 +381,4 @@ export default function AdminPanel({ onLogout }) {
         )}
 
         {activeTab === "behandlinger" && (
-          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 20, overflow: "hidden", animation: "fadeUp 0.6s ease forwards", opacity: 0 }}>
-            <div style={{ padding: "20px 20px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ fontSize: 14, fontWeight: 600, color: "rgba(232,237,245,0.5)", letterSpacing: "0.15em", textTransform: "uppercase" }}>Behandlinger</h2>
-              <button className="save-btn" onClick={() => setVisNyBehandling(true)} style={{ fontSize: 10 }}>+ Ny behandling</button>
-            </div>
-            <div className="table-row" style={{ gridTemplateColumns: "2fr 1fr 1fr 80px", borderBottom: "1px solid rgba(55,138,221,0.15)" }}>
-              {["Navn", "Varighed", "Pris", ""].map((h, i) => (
-                <span key={i} style={{ fontSize: 10, color: "rgba(232,237,245,0.3)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>{h}</span>
-              ))}
-            </div>
-            {loading ? <div style={{ padding: 40, textAlign: "center", color: "rgba(232,237,245,0.3)", fontSize: 13 }}>Henter data...</div>
-            : behandlinger.length === 0 ? <div style={{ padding: 60, textAlign: "center", color: "rgba(232,237,245,0.2)", fontSize: 14, fontStyle: "italic" }}>Ingen behandlinger endnu</div>
-            : behandlinger.map((b, i) => (
-              <div key={i} className="table-row" style={{ gridTemplateColumns: "2fr 1fr 1fr 80px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Scissors size={14} color="rgba(55,138,221,0.5)" />
-                  <span style={{ fontSize: 13, color: "#e8edf5" }}>{b.navn}</span>
-                </div>
-                <div style={{ fontSize: 12, color: "rgba(232,237,245,0.45)", display: "flex", alignItems: "center", gap: 4 }}><Clock size={11} color="rgba(232,237,245,0.3)" /> {b.varighedMinutter} min</div>
-                <div style={{ fontSize: 13, color: "#5dcaa5", fontWeight: 600 }}>{b.pris} kr.</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="action-btn" onClick={() => setEditBehandling(b)} style={{ background: "rgba(55,138,221,0.15)", color: "#85b7eb" }} title="Rediger"><Edit2 size={13} /></button>
-                  <button className="action-btn" onClick={() => sletBehandling(b.behandlingId)} style={{ background: "rgba(162,45,45,0.15)", color: "#f09595" }} title="Slet"><Trash2 size={13} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 20, overflow: "hidden", animation: "fadeUp 0.6s ease forwards
