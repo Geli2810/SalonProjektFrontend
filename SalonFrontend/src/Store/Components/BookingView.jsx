@@ -47,7 +47,6 @@ const BookingPage = () => {
   };
 
   const mapOccupiedSlots = (data) => {
-    console.log("Optagede tider fra backend:", data);
     return data.map(slot => ({
       id: `occ-${slot.startTid}-${slot.slutTid}`,
       title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
@@ -158,13 +157,12 @@ const BookingPage = () => {
   };
 
   const canPick = (start, end) => {
-    if (!selectedFrisor || !selectedBehandling) { console.log("canPick: mangler frisør/behandling"); return false; }
-    if (!start || !end) { console.log("canPick: mangler start/end"); return false; }
-    if (isTuesday(start) || isTuesday(end)) { console.log("canPick: tirsdag lukket"); return false; }
-    if (!isInAllowedRange(start) || !isInAllowedRange(end)) { console.log("canPick: udenfor dato-range", start, end); return false; }
-    if (!isInOpeningHours(start) || !isInOpeningHours(end)) { console.log("canPick: udenfor aabningstid", start.getHours(), end.getHours()); return false; }
-    if (hasOverlapWithOccupied(start, end)) { console.log("canPick: overlap med optaget"); return false; }
-    console.log("canPick: OK!", start, end);
+    if (!selectedFrisor || !selectedBehandling) return false;
+    if (!start || !end) return false;
+    if (isTuesday(start) || isTuesday(end)) return false;
+    if (!isInAllowedRange(start) || !isInAllowedRange(end)) return false;
+    if (!isInOpeningHours(start) || !isInOpeningHours(end)) return false;
+    if (hasOverlapWithOccupied(start, end)) return false;
     return true;
   };
 
@@ -181,11 +179,9 @@ const BookingPage = () => {
   };
 
   const handleDateClick = (info) => {
-    console.log("KLIK registreret!", info.date);
     const start = new Date(info.date);
     const end = new Date(start.getTime() + 30 * 60 * 1000);
-    if (!canPick(start, end)) { console.log("Klik afvist af canPick"); return; }
-    console.log("Tid valgt!", start);
+    if (!canPick(start, end)) return;
     setSelectedTime({
       start, end,
       startStr: toLocalISO(start),
@@ -290,10 +286,28 @@ const BookingPage = () => {
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2360a5fa' fill-opacity='0.45' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E");
         }
 
-        /* EVENTS */
-        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
-        .fc-timegrid-col-events { overflow: hidden !important; margin: 0 2px !important; }
-        .fc-event { max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; border-radius: 8px !important; padding: 4px 8px !important; font-size: 11px !important; font-weight: 700 !important; }
+        /* EVENTS — skal ligge OVER LEDIG baggrunden */
+        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; z-index: 10 !important; }
+        .fc-timegrid-col-events { overflow: visible !important; margin: 0 2px !important; z-index: 10 !important; position: relative !important; }
+        .fc-event {
+          max-width: 100% !important;
+          overflow: hidden !important;
+          box-sizing: border-box !important;
+          border-radius: 8px !important;
+          padding: 4px 8px !important;
+          font-size: 10px !important;
+          font-weight: 800 !important;
+          opacity: 1 !important;
+          z-index: 10 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          text-align: center !important;
+          letter-spacing: 0.05em !important;
+          text-transform: uppercase !important;
+        }
+        .fc-event .fc-event-main { color: #fff !important; width: 100% !important; }
+        .fc-event .fc-event-time { display: none !important; }
 
         /* BASE */
         .fc { font-family: 'Segoe UI', Arial, sans-serif !important; }
