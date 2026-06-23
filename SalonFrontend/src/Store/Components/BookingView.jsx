@@ -68,18 +68,26 @@ const BookingPage = () => {
     }] : [])
   ];
 
-  useEffect(() => { setCurrentUser(getCurrentUser()); }, []);
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
+
     Promise.all([
       axios.get(`${API_URL}/api/HairDresserSalon/frisorer`),
       axios.get(`${API_URL}/api/HairDresserSalon/behandlinger`)
-    ]).then(([fRes, bRes]) => {
-      setFrisorer(fRes.data);
-      setBehandlinger(bRes.data);
-    }).catch(console.error)
-      .finally(() => { setDataLoading(false); clearInterval(timer); });
+    ])
+      .then(([fRes, bRes]) => {
+        setFrisorer(fRes.data);
+        setBehandlinger(bRes.data);
+      })
+      .catch(console.error)
+      .finally(() => {
+        setDataLoading(false);
+        clearInterval(timer);
+      });
 
     return () => clearInterval(timer);
   }, []);
@@ -92,6 +100,7 @@ const BookingPage = () => {
     }
 
     let isMounted = true;
+
     const run = async () => {
       try {
         if (!isMounted) return;
@@ -103,38 +112,37 @@ const BookingPage = () => {
 
     run();
     const intervalId = setInterval(run, 10000);
-    return () => { isMounted = false; clearInterval(intervalId); };
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
   }, [selectedFrisor]);
 
-  if (currentUser?.rolle === "frisor") {
-    return (
-      <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.2)", borderRadius: 24, padding: "48px", textAlign: "center", maxWidth: 400 }}>
-          <Scissors size={32} color="#378add" style={{ margin: "0 auto 20px", display: "block" }} />
-          <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Kun kunder kan booke tider</h1>
-          <Link to="/admin" style={{ background: "rgba(24,95,165,0.4)", border: "1px solid rgba(55,138,221,0.4)", color: "#85b7eb", padding: "12px 28px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 20, display: "inline-block" }}>
-            Gå til frisørpanel
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   const isTuesday = (date) => date.getDay() === 2;
+
   const isInOpeningHours = (date) => {
     const total = date.getHours() * 60 + date.getMinutes();
     return total >= 10 * 60 && total <= 18 * 60;
   };
 
   const isInAllowedRange = (date) => {
-    const d = new Date(date); d.setHours(0, 0, 0, 0);
-    const start = new Date(todayStr); start.setHours(0, 0, 0, 0);
-    const end = new Date(maxDateStr); end.setHours(23, 59, 59, 999);
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+
+    const start = new Date(todayStr);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(maxDateStr);
+    end.setHours(23, 59, 59, 999);
+
     return d >= start && d <= end;
   };
 
   const hasOverlapWithOccupied = (start, end) => {
-    const s = start.getTime(), e = end.getTime();
+    const s = start.getTime();
+    const e = end.getTime();
+
     return occupiedSlots.some((ev) => {
       const es = new Date(ev.start).getTime();
       const ee = new Date(ev.end).getTime();
@@ -154,6 +162,7 @@ const BookingPage = () => {
   const handleDateClick = (info) => {
     const start = new Date(info.date);
     const end = new Date(start.getTime() + 30 * 60 * 1000);
+
     if (!canPick(start, end)) return;
 
     setSelectedTime({
@@ -190,6 +199,7 @@ const BookingPage = () => {
         telefon: currentUser?.telefon || "00000000"
       });
 
+      // Vis straks som optaget lokalt
       setOccupiedSlots(prev => [
         ...prev,
         {
@@ -209,6 +219,7 @@ const BookingPage = () => {
       const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
       alert(msg);
 
+      // Hvis tiden allerede blev taget, hent nyeste slots med det samme
       if (String(msg).toLowerCase().includes("optaget")) {
         try {
           await fetchOccupiedSlots(selectedFrisor);
@@ -222,7 +233,25 @@ const BookingPage = () => {
     }
   };
 
-  const handleLogout = () => { sessionStorage.clear(); setCurrentUser(null); navigate("/"); };
+  const handleLogout = () => {
+    sessionStorage.clear();
+    setCurrentUser(null);
+    navigate("/");
+  };
+
+  if (currentUser?.rolle === "frisor") {
+    return (
+      <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.2)", borderRadius: 24, padding: "48px", textAlign: "center", maxWidth: 400 }}>
+          <Scissors size={32} color="#378add" style={{ margin: "0 auto 20px", display: "block" }} />
+          <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Kun kunder kan booke tider</h1>
+          <Link to="/admin" style={{ background: "rgba(24,95,165,0.4)", border: "1px solid rgba(55,138,221,0.4)", color: "#85b7eb", padding: "12px 28px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 20, display: "inline-block" }}>
+            Gå til frisørpanel
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (
@@ -232,8 +261,14 @@ const BookingPage = () => {
           <h1 style={{ fontSize: 32, fontWeight: 300, marginBottom: 12 }}>Tiden er din!</h1>
           <p style={{ color: "rgba(232,237,245,0.45)", fontSize: 14, marginBottom: 40, lineHeight: 1.7 }}>Vi har sendt en bekræftelse til din mail.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Link to="/" style={{ background: "#185fa5", color: "#e6f1fb", padding: "16px 32px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Gå til forsiden</Link>
-            {currentUser && <Link to="/dashboard" style={{ color: "rgba(232,237,245,0.35)", fontSize: 11, textDecoration: "none" }}>Se mine aftaler</Link>}
+            <Link to="/" style={{ background: "#185fa5", color: "#e6f1fb", padding: "16px 32px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>
+              Gå til forsiden
+            </Link>
+            {currentUser && (
+              <Link to="/dashboard" style={{ color: "rgba(232,237,245,0.35)", fontSize: 11, textDecoration: "none" }}>
+                Se mine aftaler
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -281,27 +316,271 @@ const BookingPage = () => {
         .fc .fc-timegrid-now-indicator-line { border-color: #60a5fa !important; border-width: 2px !important; }
         .fc .fc-timegrid-now-indicator-arrow { border-top-color: #60a5fa !important; border-bottom-color: #60a5fa !important; }
 
-        .fc-highlight { background: rgba(29,78,216,0.35) !important; border: 2px solid #3b82f6 !important; border-radius: 8px !important; box-shadow: 0 0 16px rgba(59,130,246,0.5) !important; }
-        .fc-mirror { background: rgba(29,78,216,0.4) !important; border: 2px solid #3b82f6 !important; border-radius: 8px !important; opacity: 1 !important; box-shadow: 0 0 16px rgba(59,130,246,0.5) !important; }
+        .fc-highlight {
+          background: rgba(29,78,216,0.35) !important;
+          border: 2px solid #3b82f6 !important;
+          border-radius: 8px !important;
+          box-shadow: 0 0 16px rgba(59,130,246,0.5) !important;
+        }
 
-        .selected-event { box-shadow: 0 0 0 2px #60a5fa, 0 4px 20px rgba(29,78,216,0.5) !important; animation: pulse-blue 2s ease-in-out infinite !important; }
+        .fc-mirror {
+          background: rgba(29,78,216,0.4) !important;
+          border: 2px solid #3b82f6 !important;
+          border-radius: 8px !important;
+          opacity: 1 !important;
+          box-shadow: 0 0 16px rgba(59,130,246,0.5) !important;
+        }
+
+        .selected-event {
+          box-shadow: 0 0 0 2px #60a5fa, 0 4px 20px rgba(29,78,216,0.5) !important;
+          animation: pulse-blue 2s ease-in-out infinite !important;
+        }
+
         @keyframes pulse-blue {
           0%, 100% { box-shadow: 0 0 0 2px #60a5fa, 0 4px 16px rgba(29,78,216,0.4); }
           50% { box-shadow: 0 0 0 4px rgba(96,165,250,0.4), 0 4px 28px rgba(29,78,216,0.6); }
         }
 
         .fc-day-disabled { background: rgba(0,0,0,0.2) !important; opacity: 0.25 !important; }
+
         .fc-scroller::-webkit-scrollbar { width: 3px; }
         .fc-scroller::-webkit-scrollbar-thumb { background: rgba(55,138,221,0.15); border-radius: 4px; }
 
         @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        .select-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.15); color: #e8edf5; padding: 14px 18px; border-radius: 14px; font-size: 13px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; transition: border 0.2s; }
+        .select-field {
+          width: 100%;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(55,138,221,0.15);
+          color: #e8edf5;
+          padding: 14px 18px;
+          border-radius: 14px;
+          font-size: 13px;
+          outline: none;
+          cursor: pointer;
+          appearance: none;
+          -webkit-appearance: none;
+          transition: border 0.2s;
+        }
+
         .select-field:focus { border-color: rgba(55,138,221,0.45); }
         .select-field option { background: #0f1623; color: #e8edf5; }
       `}</style>
-      {/* Resten af din JSX (nav, layout, FullCalendar, form) beholdes som i din nuværende version */}
+
+      <nav style={{ background: "rgba(8,12,20,0.95)", borderBottom: "1px solid rgba(55,138,221,0.1)", padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
+        <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>
+          Salon Royale
+        </Link>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+          <Link to="/book" style={{ color: "#378add", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none", borderBottom: "1px solid rgba(55,138,221,0.4)", paddingBottom: 2 }}>
+            Booking
+          </Link>
+
+          {currentUser ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 20, borderLeft: "1px solid rgba(55,138,221,0.12)", paddingLeft: 20 }}>
+              <Link to="/dashboard" style={{ color: "rgba(232,237,245,0.45)", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>
+                Min profil
+              </Link>
+              <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(162,45,45,0.12)", border: "1px solid rgba(162,45,45,0.2)", color: "#f09595", padding: "7px 14px", borderRadius: 50, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}>
+                <LogOut size={12} /> Log ud
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" style={{ background: "#185fa5", color: "#e6f1fb", padding: "9px 20px", borderRadius: 50, textDecoration: "none", fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
+              Log ind
+            </Link>
+          )}
+        </div>
+      </nav>
+
+      {dataLoading && (
+        <div style={{ maxWidth: 600, margin: "80px auto", padding: "0 40px", textAlign: "center" }}>
+          <div style={{ background: "rgba(24,95,165,0.07)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 20, padding: "48px 32px" }}>
+            <RefreshCw size={26} color="#378add" style={{ margin: "0 auto 16px", display: "block", animation: "spin 1s linear infinite" }} />
+            <p style={{ fontSize: 15, color: "rgba(232,237,245,0.65)", marginBottom: 6 }}>Forbinder til serveren...</p>
+            <p style={{ fontSize: 12, color: "rgba(232,237,245,0.25)", marginBottom: 24 }}>Typisk 20-40 sekunder</p>
+            <div style={{ background: "rgba(55,138,221,0.08)", borderRadius: 50, height: 3, overflow: "hidden", maxWidth: 280, margin: "0 auto" }}>
+              <div style={{ height: "100%", background: "linear-gradient(90deg, #185fa5, #378add)", borderRadius: 50, width: `${Math.min((loadingSeconds / 45) * 100, 95)}%`, transition: "width 1s ease" }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!dataLoading && (
+        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 40px", display: "grid", gridTemplateColumns: "1fr 320px", gap: 24 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "24px 28px", animation: "fadeUp 0.5s ease forwards" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#85b7eb", flexShrink: 0 }}>
+                  1
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                  Vælg frisør og behandling
+                </span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <select className="select-field" value={selectedFrisor} onChange={e => { setSelectedFrisor(e.target.value); setSelectedTime(null); }}>
+                  <option value="">Vælg frisør</option>
+                  {frisorer.map(f => (
+                    <option key={f.frisorId} value={f.frisorId}>{f.navn}</option>
+                  ))}
+                </select>
+
+                <select className="select-field" value={selectedBehandling} onChange={e => setSelectedBehandling(e.target.value)}>
+                  <option value="">Vælg behandling</option>
+                  {behandlinger.map(b => (
+                    <option key={b.behandlingId} value={b.behandlingId}>{b.navn} — {b.pris} kr.</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedFrisor && selectedBehandling && (
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "24px 28px", animation: "fadeUp 0.4s ease forwards" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#85b7eb", flexShrink: 0 }}>
+                      2
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                      Klik på en ledig tid
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 14, fontSize: 10, color: "rgba(232,237,245,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: 2, background: "#4b5563", display: "inline-block" }} />
+                      Optaget
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: 2, background: "#dc2626", display: "inline-block" }} />
+                      Skole
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: 2, background: "#1d4ed8", display: "inline-block" }} />
+                      Din valgte
+                    </span>
+                  </div>
+                </div>
+
+                <FullCalendar
+                  plugins={[timeGridPlugin, interactionPlugin]}
+                  locale={daLocale}
+                  initialView="timeGridWeek"
+                  allDaySlot={false}
+                  slotDuration="00:30:00"
+                  snapDuration="00:30:00"
+                  slotMinTime="10:00:00"
+                  slotMaxTime="18:30:00"
+                  height="620px"
+                  expandRows={true}
+                  selectable={true}
+                  selectMirror={true}
+                  selectOverlap={false}
+                  unselectAuto={false}
+                  events={allEvents}
+                  dateClick={handleDateClick}
+                  select={handleSelect}
+                  selectAllow={(info) => canPick(info.start, info.end)}
+                  eventOverlap={false}
+                  nowIndicator={true}
+                  validRange={{ start: todayStr, end: maxDateStr }}
+                  hiddenDays={[2]}
+                  businessHours={[{ daysOfWeek: [0, 1, 3, 4, 5, 6], startTime: "10:00", endTime: "18:30" }]}
+                  headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridDay,timeGridWeek' }}
+                  slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+                  dayHeaderFormat={{ weekday: 'short', day: 'numeric', month: 'numeric' }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div style={{ position: "sticky", top: 80, height: "fit-content" }}>
+            <div style={{
+              background: selectedTime ? "rgba(24,95,165,0.08)" : "rgba(255,255,255,0.015)",
+              border: `1px solid ${selectedTime ? "rgba(55,138,221,0.25)" : "rgba(55,138,221,0.07)"}`,
+              borderRadius: 18,
+              padding: "24px",
+              transition: "all 0.4s ease",
+              opacity: selectedTime ? 1 : 0.35,
+              filter: selectedTime ? "none" : "blur(2px)",
+              pointerEvents: selectedTime ? "all" : "none"
+            }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "#e8edf5", marginBottom: 20 }}>Gennemfør booking</h2>
+
+              {selectedTime && (
+                <form onSubmit={handleBooking} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ background: "rgba(29,78,216,0.12)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 12, padding: "14px 16px" }}>
+                    <p style={{ fontSize: 10, color: "rgba(96,165,250,0.6)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>
+                      Valgt tid
+                    </p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#e8edf5", lineHeight: 1.5 }}>
+                      {new Date(selectedTime.startStr).toLocaleString('da-DK', { weekday: 'long', day: 'numeric', month: 'short' })}
+                    </p>
+                    <p style={{ fontSize: 12, color: "rgba(232,237,245,0.5)", marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                      <Clock size={11} />
+                      kl. {new Date(selectedTime.startStr).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
+                      {" — "}
+                      {new Date(selectedTime.endStr).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+
+                  {!currentUser ? (
+                    <div>
+                      <p style={{ fontSize: 10, color: "rgba(55,138,221,0.55)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>
+                        Din email
+                      </p>
+                      <div style={{ position: "relative" }}>
+                        <Mail size={12} color="rgba(232,237,245,0.15)" style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }} />
+                        <input
+                          required
+                          type="email"
+                          placeholder="din@email.dk"
+                          style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(55,138,221,0.15)", color: "#e8edf5", padding: "11px 13px 11px 34px", borderRadius: 11, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                          onChange={e => setGuestEmail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ background: "rgba(15,110,86,0.08)", border: "1px solid rgba(93,202,165,0.15)", borderRadius: 12, padding: "11px 14px" }}>
+                      <p style={{ fontSize: 9, color: "rgba(93,202,165,0.5)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 4 }}>
+                        Logget ind som
+                      </p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#e8edf5" }}>{currentUser.navn}</p>
+                      <p style={{ fontSize: 11, color: "rgba(232,237,245,0.3)" }}>{currentUser.email}</p>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    style={{
+                      width: "100%",
+                      background: "linear-gradient(135deg, #1d4ed8, #2563eb)",
+                      color: "#e6f1fb",
+                      padding: "15px",
+                      borderRadius: 12,
+                      border: "none",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.2em",
+                      textTransform: "uppercase",
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                      opacity: isSubmitting ? 0.75 : 1,
+                      boxShadow: "0 4px 20px rgba(29,78,216,0.35)"
+                    }}
+                  >
+                    {isSubmitting ? "Behandler..." : "Bestil tid nu"}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
