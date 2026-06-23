@@ -39,7 +39,7 @@ const BookingPage = () => {
 
   const mapOccupiedSlots = (data) =>
     data.map(slot => ({
-      id: `occ-${slot.startTid}`,
+      id: `occ-${slot.startTid}-${slot.slutTid}`,
       title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
       start: slot.startTid,
       end: slot.slutTid,
@@ -92,6 +92,7 @@ const BookingPage = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Polling: hent optagede tider for valgt frisør
   useEffect(() => {
     if (!selectedFrisor) {
       setOccupiedSlots([]);
@@ -151,6 +152,7 @@ const BookingPage = () => {
   };
 
   const canPick = (start, end) => {
+    if (!selectedFrisor || !selectedBehandling) return false;
     if (!start || !end) return false;
     if (isTuesday(start) || isTuesday(end)) return false;
     if (!isInAllowedRange(start) || !isInAllowedRange(end)) return false;
@@ -175,6 +177,7 @@ const BookingPage = () => {
 
   const handleSelect = (info) => {
     if (!canPick(info.start, info.end)) return;
+
     setSelectedTime({
       start: info.start,
       end: info.end,
@@ -199,19 +202,8 @@ const BookingPage = () => {
         telefon: currentUser?.telefon || "00000000"
       });
 
-      // Vis straks som optaget lokalt
-      setOccupiedSlots(prev => [
-        ...prev,
-        {
-          id: `occ-local-${Date.now()}`,
-          title: "OPTAGET",
-          start: selectedTime.startStr,
-          end: selectedTime.endStr,
-          backgroundColor: "#4b5563",
-          borderColor: "transparent",
-          textColor: "#ffffff"
-        }
-      ]);
+      // Hent direkte fra DB bagefter (ikke kun lokal fake state)
+      await fetchOccupiedSlots(selectedFrisor);
 
       setSelectedTime(null);
       setIsSuccess(true);
@@ -219,7 +211,7 @@ const BookingPage = () => {
       const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
       alert(msg);
 
-      // Hvis tiden allerede blev taget, hent nyeste slots med det samme
+      // Hvis optaget, sync straks med DB
       if (String(msg).toLowerCase().includes("optaget")) {
         try {
           await fetchOccupiedSlots(selectedFrisor);
@@ -424,16 +416,12 @@ const BookingPage = () => {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <select className="select-field" value={selectedFrisor} onChange={e => { setSelectedFrisor(e.target.value); setSelectedTime(null); }}>
                   <option value="">Vælg frisør</option>
-                  {frisorer.map(f => (
-                    <option key={f.frisorId} value={f.frisorId}>{f.navn}</option>
-                  ))}
+                  {frisorer.map(f => <option key={f.frisorId} value={f.frisorId}>{f.navn}</option>)}
                 </select>
 
                 <select className="select-field" value={selectedBehandling} onChange={e => setSelectedBehandling(e.target.value)}>
                   <option value="">Vælg behandling</option>
-                  {behandlinger.map(b => (
-                    <option key={b.behandlingId} value={b.behandlingId}>{b.navn} — {b.pris} kr.</option>
-                  ))}
+                  {behandlinger.map(b => <option key={b.behandlingId} value={b.behandlingId}>{b.navn} — {b.pris} kr.</option>)}
                 </select>
               </div>
             </div>
@@ -447,21 +435,6 @@ const BookingPage = () => {
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
                       Klik på en ledig tid
-                    </span>
-                  </div>
-
-                  <div style={{ display: "flex", gap: 14, fontSize: 10, color: "rgba(232,237,245,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: 2, background: "#4b5563", display: "inline-block" }} />
-                      Optaget
-                    </span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: 2, background: "#dc2626", display: "inline-block" }} />
-                      Skole
-                    </span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: 2, background: "#1d4ed8", display: "inline-block" }} />
-                      Din valgte
                     </span>
                   </div>
                 </div>
