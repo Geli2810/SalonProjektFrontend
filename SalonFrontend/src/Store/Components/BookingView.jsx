@@ -156,14 +156,26 @@ const BookingPage = () => {
     return true;
   };
 
+  // Formatér til lokal tid UDEN tidszone-konvertering (undgaar UTC-forskydning)
+  const toLocalISO = (date) => {
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, "0");
+    const da = String(d.getDate()).padStart(2, "0");
+    const h = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    const s = String(d.getSeconds()).padStart(2, "0");
+    return `${y}-${mo}-${da}T${h}:${mi}:${s}`;
+  };
+
   const handleDateClick = (info) => {
     const start = new Date(info.date);
     const end = new Date(start.getTime() + 30 * 60 * 1000);
     if (!canPick(start, end)) return;
     setSelectedTime({
       start, end,
-      startStr: start.toISOString(),
-      endStr: end.toISOString()
+      startStr: toLocalISO(start),
+      endStr: toLocalISO(end)
     });
   };
 
@@ -172,8 +184,8 @@ const BookingPage = () => {
     setSelectedTime({
       start: info.start,
       end: info.end,
-      startStr: info.startStr,
-      endStr: info.endStr
+      startStr: toLocalISO(info.start),
+      endStr: toLocalISO(info.end)
     });
   };
 
@@ -298,6 +310,14 @@ const BookingPage = () => {
         .fc .fc-timegrid-slot-label { border: none !important; }
         .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 600 !important; padding-right: 10px !important; }
         .fc .fc-timegrid-axis { background: rgba(8,12,20,0.7) !important; border-right: 1px solid rgba(55,138,221,0.07) !important; }
+
+        /* HOVER paa ledige tider */
+        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane:hover {
+          background: rgba(55,138,221,0.12) !important;
+          cursor: pointer !important;
+          box-shadow: inset 0 0 0 1px rgba(96,165,250,0.4) !important;
+          transition: all 0.15s ease !important;
+        }
 
         /* I DAG */
         .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
