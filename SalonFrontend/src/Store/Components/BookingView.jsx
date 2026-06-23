@@ -37,6 +37,27 @@ const BookingPage = () => {
   maxDate.setDate(maxDate.getDate() + 7);
   const maxDateStr = localDateStr(maxDate);
 
+  const mapOccupiedSlots = (data) =>
+    data.map(slot => ({
+      id: `occ-${slot.startTid}`,
+      title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
+      start: slot.startTid,
+      end: slot.slutTid,
+      backgroundColor: slot.title?.toLowerCase().includes("skole") ? "#dc2626" : "#4b5563",
+      borderColor: "transparent",
+      textColor: "#ffffff"
+    }));
+
+  const fetchOccupiedSlots = async (frisorId) => {
+    if (!frisorId) return;
+    try {
+      const res = await axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${frisorId}`);
+      setOccupiedSlots(mapOccupiedSlots(res.data));
+    } catch (err) {
+      console.error("Kunne ikke hente occupied slots:", err);
+    }
+  };
+
   const allEvents = [
     ...occupiedSlots,
     ...(selectedTime ? [{
@@ -75,7 +96,7 @@ const BookingPage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Hent optagede tider + polling så alle kunder ser nye bookinger
+  // Polling så alle kunder ser nye bookinger
   useEffect(() => {
     if (!selectedFrisor) {
       setOccupiedSlots([]);
@@ -85,29 +106,13 @@ const BookingPage = () => {
 
     let isMounted = true;
 
-    const fetchOccupiedSlots = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${selectedFrisor}`);
-        if (!isMounted) return;
-
-        setOccupiedSlots(
-          res.data.map(slot => ({
-            id: `occ-${slot.startTid}`,
-            title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
-            start: slot.startTid,
-            end: slot.slutTid,
-            backgroundColor: slot.title?.toLowerCase().includes("skole") ? "#dc2626" : "#4b5563",
-            borderColor: "transparent",
-            textColor: "#ffffff"
-          }))
-        );
-      } catch (err) {
-        console.error("Kunne ikke hente occupied slots:", err);
-      }
+    const run = async () => {
+      if (!isMounted) return;
+      await fetchOccupiedSlots(selectedFrisor);
     };
 
-    fetchOccupiedSlots();
-    const intervalId = setInterval(fetchOccupiedSlots, 10000);
+    run();
+    const intervalId = setInterval(run, 10000);
 
     return () => {
       isMounted = false;
@@ -209,7 +214,7 @@ const BookingPage = () => {
         telefon: currentUser?.telefon || "00000000"
       });
 
-      // Instant visning som optaget
+      // Vis straks som optaget lokalt
       setOccupiedSlots(prev => [
         ...prev,
         {
@@ -226,7 +231,14 @@ const BookingPage = () => {
       setSelectedTime(null);
       setIsSuccess(true);
     } catch (err) {
-      alert(err.response?.data?.message || "Kunne ikke bestille tid.");
+      const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
+      alert(msg);
+
+      // Hvis tiden blev taget af en anden, sync straks
+      if (String(msg).toLowerCase().includes("optaget")) {
+        await fetchOccupiedSlots(selectedFrisor);
+        setSelectedTime(null);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -261,22 +273,10 @@ const BookingPage = () => {
         .fc-non-business { display: none !important; }
         .fc-bg-event { display: none !important; }
 
-        .fc .fc-timegrid-col,
-        .fc .fc-timegrid-col-frame {
-          position: relative;
-          overflow: hidden !important;
-        }
-
+        /* Ingen LEDIG-baggrund */
         .fc .fc-timegrid-col.fc-day .fc-timegrid-col-frame {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2363b3ed' fill-opacity='0.28' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E");
-          background-repeat: repeat-y;
-          background-position: center top;
-          background-size: 100px 52px;
-          background-clip: padding-box;
+          background-image: none !important;
         }
-
-        .fc .fc-day-disabled .fc-timegrid-col-frame { background-image: none !important; }
-        .fc .fc-timegrid-axis, .fc .fc-timegrid-axis-frame { background-image: none !important; }
 
         .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
         .fc-timegrid-col-events { overflow: hidden !important; margin: 0 2px !important; }
