@@ -311,7 +311,7 @@ export default function LandingPage({ currentUser, onLogout }) {
         }}>
           {[
             { num: "500+", label: "Glade kunder" },
-            { num: "10+", label: "Års erfaring" },
+            { num: "6+", label: "Års erfaring" },
             { num: "4.9★", label: "Gennemsnit" }
           ].map((s, i) => (
             <div key={i} style={{
