@@ -187,6 +187,8 @@ const BookingPage = () => {
           font-size: 11px !important;
           font-weight: 600 !important;
         }
+        .fc-bg-event { display: none !important; }
+        .fc-timegrid-bg-harness { display: none !important; }
         .fc-mirror {
           background: rgba(180, 83, 9, 0.15) !important;
           border: 2px dashed #b45309 !important;
@@ -288,14 +290,14 @@ const BookingPage = () => {
                   left: 'prev,next today',
                   center: 'title',
                   right: 'timeGridDay,timeGridWeek'
-                }}
+                // }}
                 slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
                 dayHeaderFormat={{ weekday: 'short', day: 'numeric', month: 'numeric' }}
-                businessHours={{
-                  daysOfWeek: [1, 2, 3, 4, 5],
-                  startTime: '08:00',
-                  endTime: '18:00'
-                }}
+                // businessHours={{
+                //   daysOfWeek: [1, 2, 3, 4, 5],
+                //   startTime: '08:00',
+                //   endTime: '18:00'
+                // }}
               />
             </div>
           )}
