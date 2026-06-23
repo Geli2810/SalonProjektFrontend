@@ -161,13 +161,17 @@ const BookingPage = () => {
       <style>{`
         /* FJERN ALT GAMMELT */
         .fc-timegrid-slot { background-image: none !important; background-color: transparent !important; }
-        .fc-bg-event, .fc-timegrid-bg-harness, .fc-timegrid-col-bg, .fc-timegrid-bg-events, .fc-non-business { display: none !important; }
+        .fc-non-business { display: none !important; }
+        /* LEDIG bg events skal IKKE skjules */
+        .fc-bg-event.ledig-bg { display: block !important; }
 
         /* LEDIG background events */
-        .ledig-bg {
-          background: rgba(55,138,221,0.04) !important;
+        .fc-bg-event.ledig-bg {
+          background: rgba(55,138,221,0.05) !important;
           opacity: 1 !important;
           position: relative;
+          border-radius: 6px;
+          margin: 1px;
         }
         .ledig-bg::after {
           content: 'LEDIG';
