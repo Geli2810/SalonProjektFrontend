@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -10,7 +10,6 @@ import { getCurrentUser } from "../../SYSAdmin";
 const BookingPage = () => {
   const navigate = useNavigate();
   const API_URL = 'https://salonproject.onrender.com';
-  const calendarRef = useRef(null);
   const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const [frisorer, setFrisorer] = useState([]);
   const [behandlinger, setBehandlinger] = useState([]);
@@ -23,7 +22,6 @@ const BookingPage = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [loadingSeconds, setLoadingSeconds] = useState(0);
 
-  // Alle events kombineret — optagede + valgt tid
   const allEvents = [
     ...occupiedSlots,
     ...(selectedTime ? [{
@@ -31,8 +29,8 @@ const BookingPage = () => {
       title: "✓ Din valgte tid",
       start: selectedTime.startStr,
       end: selectedTime.endStr,
-      backgroundColor: "#185fa5",
-      borderColor: "#60a5fa",
+      backgroundColor: "#1d4ed8",
+      borderColor: "#3b82f6",
       textColor: "#ffffff",
       classNames: ["selected-event"]
     }] : [])
@@ -62,7 +60,7 @@ const BookingPage = () => {
             title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
             start: slot.startTid,
             end: slot.slutTid,
-            backgroundColor: slot.title?.toLowerCase().includes("skole") ? '#dc2626' : '#374151',
+            backgroundColor: slot.title?.toLowerCase().includes("skole") ? '#dc2626' : '#4b5563',
             borderColor: 'transparent',
             textColor: '#ffffff'
           })));
@@ -133,24 +131,33 @@ const BookingPage = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
       <style>{`
-        /* FJERN ALT LEDIG SVG OG BAGGRUNDSCELLER */
+        /* FJERN ALT GAMMELT */
         .fc-timegrid-slot { background-image: none !important; background-color: transparent !important; }
         .fc-bg-event, .fc-timegrid-bg-harness, .fc-timegrid-col-bg, .fc-timegrid-bg-events, .fc-non-business { display: none !important; }
+
+        /* LEDIG tekst i HVER kolonne via col-bg baggrund */
+        .fc-timegrid-col .fc-timegrid-col-bg {
+          display: block !important;
+          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='52'><text x='50%' y='50%' font-family='Arial,sans-serif' font-weight='800' font-size='8' fill='rgba(99,179,237,0.35)' opacity='1' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'>LEDIG</text></svg>") !important;
+          background-repeat: repeat-y !important;
+          background-size: 100% 52px !important;
+          pointer-events: none !important;
+        }
 
         /* FIX EVENTS */
         .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
         .fc-timegrid-col-events { overflow: hidden !important; margin: 0 2px !important; }
-        .fc-event { max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; border-radius: 8px !important; padding: 3px 8px !important; font-size: 11px !important; font-weight: 700 !important; }
+        .fc-event { max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; border-radius: 8px !important; padding: 4px 8px !important; font-size: 11px !important; font-weight: 700 !important; }
 
-        /* BASE KALENDER */
+        /* BASE */
         .fc { font-family: 'Segoe UI', Arial, sans-serif !important; }
         .fc .fc-view-harness { background: transparent !important; }
         .fc .fc-toolbar { padding: 0 0 20px 0; }
-        .fc .fc-toolbar-title { font-size: 13px !important; font-weight: 600 !important; color: rgba(232,237,245,0.6) !important; letter-spacing: 0.05em !important; }
+        .fc .fc-toolbar-title { font-size: 13px !important; font-weight: 600 !important; color: rgba(232,237,245,0.6) !important; }
 
         /* KNAPPER */
-        .fc .fc-button { background: rgba(24,95,165,0.2) !important; border: 1px solid rgba(55,138,221,0.2) !important; border-radius: 10px !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; padding: 7px 14px !important; color: rgba(133,183,235,0.7) !important; transition: all 0.2s !important; box-shadow: none !important; }
-        .fc .fc-button:hover { background: rgba(24,95,165,0.4) !important; border-color: rgba(55,138,221,0.4) !important; box-shadow: none !important; }
+        .fc .fc-button { background: rgba(24,95,165,0.2) !important; border: 1px solid rgba(55,138,221,0.2) !important; border-radius: 10px !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; padding: 7px 14px !important; color: rgba(133,183,235,0.7) !important; box-shadow: none !important; transition: all 0.2s !important; }
+        .fc .fc-button:hover { background: rgba(24,95,165,0.4) !important; box-shadow: none !important; }
         .fc .fc-button:focus { box-shadow: none !important; outline: none !important; }
         .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: rgba(24,95,165,0.55) !important; box-shadow: none !important; }
 
@@ -159,69 +166,65 @@ const BookingPage = () => {
         .fc td, .fc th { border-color: rgba(55,138,221,0.07) !important; }
         .fc .fc-scrollgrid-section > td { border: none !important; }
 
-        /* HEADER DAGE */
+        /* HEADER */
         .fc .fc-col-header { background: rgba(8,12,20,0.9) !important; }
         .fc .fc-col-header-cell { padding: 12px 0 !important; border-bottom: 1px solid rgba(55,138,221,0.1) !important; }
         .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: rgba(232,237,245,0.3) !important; text-decoration: none !important; }
         .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #60a5fa !important; }
 
-        /* TIDS SLOTS */
-        .fc .fc-timegrid-slot { height: 52px !important; border-color: rgba(55,138,221,0.05) !important; position: relative; }
-        .fc .fc-timegrid-slot-minor { border-color: rgba(55,138,221,0.03) !important; }
+        /* SLOTS */
+        .fc .fc-timegrid-slot { height: 52px !important; border-color: rgba(55,138,221,0.05) !important; }
+        .fc .fc-timegrid-slot-minor { border-color: rgba(55,138,221,0.02) !important; }
         .fc .fc-timegrid-slot-label { border: none !important; }
-        .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.18) !important; font-weight: 600 !important; padding-right: 10px !important; }
+        .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 600 !important; padding-right: 10px !important; }
         .fc .fc-timegrid-axis { background: rgba(8,12,20,0.7) !important; border-right: 1px solid rgba(55,138,221,0.07) !important; }
 
-        /* LEDIG tekst i ledige slots via pseudo-element */
-        .fc .fc-timegrid-slot-lane::after {
-          content: 'LEDIG';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 8px;
-          font-weight: 700;
-          letter-spacing: 0.2em;
-          color: rgba(55,138,221,0.12);
-          pointer-events: none;
-          white-space: nowrap;
-        }
-
-        /* HOVER på ledige slots */
-        .fc .fc-timegrid-slot-lane:hover { background: rgba(55,138,221,0.05) !important; cursor: pointer; }
-        .fc .fc-timegrid-slot-lane:hover::after { color: rgba(55,138,221,0.25); }
-
         /* I DAG */
-        .fc .fc-day-today { background: rgba(55,138,221,0.02) !important; }
-        .fc .fc-day-today .fc-timegrid-slot-lane::after { color: rgba(96,165,250,0.15); }
+        .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
+        .fc .fc-day-today .fc-timegrid-col-bg {
+          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='52'><text x='50%' y='50%' font-family='Arial,sans-serif' font-weight='800' font-size='8' fill='rgba(96,165,250,0.4)' opacity='1' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'>LEDIG</text></svg>") !important;
+        }
 
         /* NU INDIKATOR */
         .fc .fc-timegrid-now-indicator-line { border-color: #60a5fa !important; border-width: 2px !important; }
         .fc .fc-timegrid-now-indicator-arrow { border-top-color: #60a5fa !important; border-bottom-color: #60a5fa !important; }
 
-        /* SELECTION HIGHLIGHT */
-        .fc-highlight { background: rgba(24,95,165,0.18) !important; border: 2px solid #378add !important; border-radius: 10px !important; }
-        .fc-mirror { background: rgba(24,95,165,0.25) !important; border: 2px dashed rgba(55,138,221,0.7) !important; border-radius: 10px !important; }
+        /* SELECTION — kun i den specifikke kolonne */
+        .fc-highlight {
+          background: rgba(29,78,216,0.2) !important;
+          border: 2px solid #3b82f6 !important;
+          border-radius: 10px !important;
+        }
+        .fc-mirror {
+          background: rgba(29,78,216,0.25) !important;
+          border: 2px dashed rgba(59,130,246,0.8) !important;
+          border-radius: 10px !important;
+          opacity: 0.9 !important;
+        }
 
-        /* VALGT TID EVENT */
-        .selected-event { box-shadow: 0 0 0 2px #60a5fa, 0 4px 16px rgba(24,95,165,0.4) !important; animation: pulse-blue 2s ease-in-out infinite !important; }
-        @keyframes pulse-blue { 0%, 100% { box-shadow: 0 0 0 2px #60a5fa, 0 4px 16px rgba(24,95,165,0.4); } 50% { box-shadow: 0 0 0 4px rgba(96,165,250,0.5), 0 4px 24px rgba(24,95,165,0.6); } }
+        /* VALGT TID */
+        .selected-event {
+          box-shadow: 0 0 0 2px #60a5fa, 0 4px 20px rgba(29,78,216,0.5) !important;
+          animation: pulse-blue 2s ease-in-out infinite !important;
+        }
+        @keyframes pulse-blue {
+          0%, 100% { box-shadow: 0 0 0 2px #60a5fa, 0 4px 16px rgba(29,78,216,0.4); }
+          50% { box-shadow: 0 0 0 4px rgba(96,165,250,0.4), 0 4px 28px rgba(29,78,216,0.6); }
+        }
 
-        /* DISABLED DAGE */
-        .fc-day-disabled { background: rgba(0,0,0,0.2) !important; opacity: 0.3 !important; cursor: not-allowed !important; }
-        .fc-day-disabled .fc-timegrid-slot-lane::after { display: none; }
+        /* DISABLED */
+        .fc-day-disabled { background: rgba(0,0,0,0.2) !important; opacity: 0.25 !important; }
+        .fc-day-disabled .fc-timegrid-col-bg { background-image: none !important; }
 
         /* SCROLLBAR */
         .fc-scroller::-webkit-scrollbar { width: 3px; }
         .fc-scroller::-webkit-scrollbar-thumb { background: rgba(55,138,221,0.15); border-radius: 4px; }
 
-        /* ANIMATIONS */
         @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* SELECT FIELDS */
-        .select-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.15); color: #e8edf5; padding: 14px 18px; border-radius: 14px; font-size: 13px; outline: none; cursor: pointer; transition: border 0.2s; appearance: none; -webkit-appearance: none; }
-        .select-field:focus { border-color: rgba(55,138,221,0.45); background: rgba(255,255,255,0.06); }
+        .select-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.15); color: #e8edf5; padding: 14px 18px; border-radius: 14px; font-size: 13px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; transition: border 0.2s; }
+        .select-field:focus { border-color: rgba(55,138,221,0.45); }
         .select-field option { background: #0f1623; color: #e8edf5; }
       `}</style>
 
@@ -243,19 +246,16 @@ const BookingPage = () => {
         </div>
       </nav>
 
-      {/* BACKEND LOADING */}
+      {/* LOADING */}
       {dataLoading && (
         <div style={{ maxWidth: 600, margin: "80px auto", padding: "0 40px", textAlign: "center" }}>
           <div style={{ background: "rgba(24,95,165,0.07)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 20, padding: "48px 32px" }}>
             <RefreshCw size={26} color="#378add" style={{ margin: "0 auto 16px", display: "block", animation: "spin 1s linear infinite" }} />
             <p style={{ fontSize: 15, color: "rgba(232,237,245,0.65)", marginBottom: 6 }}>Forbinder til serveren...</p>
-            <p style={{ fontSize: 12, color: "rgba(232,237,245,0.25)", marginBottom: 24 }}>Vågner op — typisk 20-40 sekunder</p>
+            <p style={{ fontSize: 12, color: "rgba(232,237,245,0.25)", marginBottom: 24 }}>Typisk 20-40 sekunder</p>
             <div style={{ background: "rgba(55,138,221,0.08)", borderRadius: 50, height: 3, overflow: "hidden", maxWidth: 280, margin: "0 auto" }}>
               <div style={{ height: "100%", background: "linear-gradient(90deg, #185fa5, #378add)", borderRadius: 50, width: `${Math.min((loadingSeconds / 45) * 100, 95)}%`, transition: "width 1s ease" }} />
             </div>
-            <p style={{ fontSize: 10, color: "rgba(55,138,221,0.4)", marginTop: 10, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              {loadingSeconds < 15 ? "Starter..." : loadingSeconds < 35 ? "Næsten klar..." : "Et øjeblik..."}
-            </p>
           </div>
         </div>
       )}
@@ -291,22 +291,20 @@ const BookingPage = () => {
                     <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#85b7eb", flexShrink: 0 }}>2</div>
                     <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Klik på en ledig tid</span>
                   </div>
-                  <div style={{ display: "flex", gap: 14, fontSize: 10, color: "rgba(232,237,245,0.2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(55,138,221,0.12)", border: "1px solid rgba(55,138,221,0.2)", display: "inline-block" }} />Ledig</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#374151", display: "inline-block" }} />Optaget</span>
+                  <div style={{ display: "flex", gap: 14, fontSize: 10, color: "rgba(232,237,245,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#4b5563", display: "inline-block" }} />Optaget</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#dc2626", display: "inline-block" }} />Skole</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#185fa5", display: "inline-block" }} />Din valgte</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#1d4ed8", display: "inline-block" }} />Din valgte</span>
                   </div>
                 </div>
 
                 <FullCalendar
-                  ref={calendarRef}
                   plugins={[timeGridPlugin, interactionPlugin]}
                   initialView="timeGridWeek"
                   allDaySlot={false}
                   slotMinTime="10:00:00"
                   slotMaxTime="18:30:00"
-                  height="640px"
+                  height="620px"
                   expandRows={true}
                   selectable={true}
                   selectOverlap={false}
@@ -324,7 +322,7 @@ const BookingPage = () => {
             )}
           </div>
 
-          {/* HØJRE — GENNEMFØR */}
+          {/* HØJRE */}
           <div style={{ position: "sticky", top: 80, height: "fit-content" }}>
             <div style={{
               background: selectedTime ? "rgba(24,95,165,0.08)" : "rgba(255,255,255,0.015)",
@@ -335,16 +333,16 @@ const BookingPage = () => {
               filter: selectedTime ? "none" : "blur(2px)",
               pointerEvents: selectedTime ? "all" : "none"
             }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: "#e8edf5", marginBottom: 20, letterSpacing: "0.02em" }}>Gennemfør booking</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "#e8edf5", marginBottom: 20 }}>Gennemfør booking</h2>
 
               {selectedTime && (
                 <form onSubmit={handleBooking} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div style={{ background: "rgba(24,95,165,0.12)", border: "1px solid rgba(55,138,221,0.2)", borderRadius: 12, padding: "14px 16px" }}>
+                  <div style={{ background: "rgba(29,78,216,0.12)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 12, padding: "14px 16px" }}>
                     <p style={{ fontSize: 10, color: "rgba(96,165,250,0.6)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>Valgt tid</p>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "#e8edf5", lineHeight: 1.5 }}>
                       {new Date(selectedTime.startStr).toLocaleString('da-DK', { weekday: 'long', day: 'numeric', month: 'short' })}
                     </p>
-                    <p style={{ fontSize: 12, color: "rgba(232,237,245,0.5)", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                    <p style={{ fontSize: 12, color: "rgba(232,237,245,0.5)", marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
                       <Clock size={11} />
                       kl. {new Date(selectedTime.startStr).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
                       {" — "}
@@ -370,7 +368,7 @@ const BookingPage = () => {
                     </div>
                   )}
 
-                  <button type="submit" style={{ width: "100%", background: "linear-gradient(135deg, #185fa5, #1e7ac7)", color: "#e6f1fb", padding: "15px", borderRadius: 12, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: "pointer", transition: "opacity 0.2s", boxShadow: "0 4px 20px rgba(24,95,165,0.3)" }}>
+                  <button type="submit" style={{ width: "100%", background: "linear-gradient(135deg, #1d4ed8, #2563eb)", color: "#e6f1fb", padding: "15px", borderRadius: 12, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: "pointer", boxShadow: "0 4px 20px rgba(29,78,216,0.35)" }}>
                     Bestil tid nu
                   </button>
                 </form>
