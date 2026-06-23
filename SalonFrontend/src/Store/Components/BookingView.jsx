@@ -37,16 +37,27 @@ const BookingPage = () => {
   maxDate.setDate(maxDate.getDate() + 7);
   const maxDateStr = localDateStr(maxDate);
 
-  const mapOccupiedSlots = (data) =>
-    data.map(slot => ({
+  // Fjern evt. Z (UTC-markør) saa FullCalendar laeser tiden som lokal tid
+  const stripZ = (t) => {
+    if (!t) return t;
+    let s = String(t);
+    if (s.endsWith("Z")) s = s.slice(0, -1);
+    s = s.replace(/[+-]\d{2}:\d{2}$/, "");
+    return s;
+  };
+
+  const mapOccupiedSlots = (data) => {
+    console.log("Optagede tider fra backend:", data);
+    return data.map(slot => ({
       id: `occ-${slot.startTid}-${slot.slutTid}`,
       title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
-      start: slot.startTid,
-      end: slot.slutTid,
+      start: stripZ(slot.startTid),
+      end: stripZ(slot.slutTid),
       backgroundColor: slot.title?.toLowerCase().includes("skole") ? "#dc2626" : "#4b5563",
       borderColor: "transparent",
       textColor: "#ffffff"
     }));
+  };
 
   const fetchOccupiedSlots = async (frisorId) => {
     if (!frisorId) return;
@@ -311,12 +322,18 @@ const BookingPage = () => {
         .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 600 !important; padding-right: 10px !important; }
         .fc .fc-timegrid-axis { background: rgba(8,12,20,0.7) !important; border-right: 1px solid rgba(55,138,221,0.07) !important; }
 
-        /* HOVER paa ledige tider */
-        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane:hover {
-          background: rgba(55,138,221,0.12) !important;
-          cursor: pointer !important;
-          box-shadow: inset 0 0 0 1px rgba(96,165,250,0.4) !important;
+        /* HOVER paa ledige tider — reaktiv pop-effekt */
+        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane {
           transition: all 0.15s ease !important;
+        }
+        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane:hover {
+          background: rgba(55,138,221,0.18) !important;
+          cursor: pointer !important;
+          box-shadow: inset 0 0 0 2px rgba(96,165,250,0.6), inset 0 0 16px rgba(59,130,246,0.25) !important;
+        }
+        /* Selve celle-kolonnen reagerer ogsaa */
+        .fc .fc-timegrid-col.fc-day:hover .fc-timegrid-col-frame {
+          background-color: rgba(55,138,221,0.02) !important;
         }
 
         /* I DAG */
