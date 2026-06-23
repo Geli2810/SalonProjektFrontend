@@ -16,6 +16,7 @@ const BookingPage = () => {
   const [selectedFrisor, setSelectedFrisor] = useState("");
   const [selectedBehandling, setSelectedBehandling] = useState("");
   const [occupiedSlots, setOccupiedSlots] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState([]);
   const [rawOccupied, setRawOccupied] = useState([]);
   const [selectedTime, setSelectedTime] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -74,6 +75,15 @@ const BookingPage = () => {
   }, [selectedFrisor, API_URL]);
 
   const handleSelect = (info) => {
+    setSelectedEvent([{
+      id: "selected",
+      title: "✓ Din valgte tid",
+      start: info.startStr,
+      end: info.endStr,
+      backgroundColor: "#185fa5",
+      borderColor: "#378add",
+      textColor: "#ffffff"
+    }]);
     setSelectedTime(info);
     // Tilføj valgt tid som blåt event i kalenderen
     const selectedEvent = {
@@ -85,7 +95,7 @@ const BookingPage = () => {
       borderColor: "#378add",
       textColor: "#ffffff"
     };
-    setOccupiedSlots([...rawOccupied, selectedEvent]);
+    
   };
 
   if (currentUser?.rolle === "frisor") {
@@ -277,14 +287,14 @@ const BookingPage = () => {
                   initialView="timeGridWeek"
                   allDaySlot={false}
                   slotMinTime="08:00:00"
-                  slotMaxTime="18:00:00"
+                  slotMaxTime="18:30:00"
                   height="680px"
                   expandRows={true}
                   selectable={true}
                   selectOverlap={false}
-                  selectMirror={false}
-                  unselectAuto={false}
-                  events={occupiedSlots}
+                  selectMirror={true}
+                  unselectAuto={true}
+                  eventSources={[occupiedSlots, selectedEvent]}
                   select={handleSelect}
                   locale="da"
                   nowIndicator={true}
