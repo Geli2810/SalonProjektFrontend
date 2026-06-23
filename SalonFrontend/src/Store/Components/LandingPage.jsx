@@ -176,7 +176,7 @@ export default function LandingPage({ currentUser, onLogout }) {
       }}>
         <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: 22, display: "inline-block" }} className="scissors-icon">✂</span>
-          <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>Salon Royale</span>
+          <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>SuperKlip</span>
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
@@ -381,7 +381,7 @@ export default function LandingPage({ currentUser, onLogout }) {
         display: "flex", justifyContent: "space-between", alignItems: "center",
         flexWrap: "wrap", gap: 16
       }}>
-        <span style={{ fontSize: 13, color: "rgba(232,237,245,0.3)", letterSpacing: "0.1em" }}>© 2026 Salon Royale</span>
+        <span style={{ fontSize: 13, color: "rgba(232,237,245,0.3)", letterSpacing: "0.1em" }}>© 2026 SuperKlip</span>
         <div style={{ display: "flex", gap: 24 }}>
           <Link to="/book" className="nav-link">Book</Link>
           <Link to="/login" className="nav-link">Log ind</Link>
