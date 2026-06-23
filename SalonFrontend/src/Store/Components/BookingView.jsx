@@ -158,12 +158,13 @@ const BookingPage = () => {
   };
 
   const canPick = (start, end) => {
-    if (!selectedFrisor || !selectedBehandling) return false;
-    if (!start || !end) return false;
-    if (isTuesday(start) || isTuesday(end)) return false;
-    if (!isInAllowedRange(start) || !isInAllowedRange(end)) return false;
-    if (!isInOpeningHours(start) || !isInOpeningHours(end)) return false;
-    if (hasOverlapWithOccupied(start, end)) return false;
+    if (!selectedFrisor || !selectedBehandling) { console.log("canPick: mangler frisør/behandling"); return false; }
+    if (!start || !end) { console.log("canPick: mangler start/end"); return false; }
+    if (isTuesday(start) || isTuesday(end)) { console.log("canPick: tirsdag lukket"); return false; }
+    if (!isInAllowedRange(start) || !isInAllowedRange(end)) { console.log("canPick: udenfor dato-range", start, end); return false; }
+    if (!isInOpeningHours(start) || !isInOpeningHours(end)) { console.log("canPick: udenfor aabningstid", start.getHours(), end.getHours()); return false; }
+    if (hasOverlapWithOccupied(start, end)) { console.log("canPick: overlap med optaget"); return false; }
+    console.log("canPick: OK!", start, end);
     return true;
   };
 
@@ -180,9 +181,11 @@ const BookingPage = () => {
   };
 
   const handleDateClick = (info) => {
+    console.log("KLIK registreret!", info.date);
     const start = new Date(info.date);
     const end = new Date(start.getTime() + 30 * 60 * 1000);
-    if (!canPick(start, end)) return;
+    if (!canPick(start, end)) { console.log("Klik afvist af canPick"); return; }
+    console.log("Tid valgt!", start);
     setSelectedTime({
       start, end,
       startStr: toLocalISO(start),
