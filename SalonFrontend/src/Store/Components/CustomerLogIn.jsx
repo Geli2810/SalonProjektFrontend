@@ -44,7 +44,7 @@ export default function CustomerLogIn({ onLoginSuccess }) {
 
         <div style={{ marginBottom: 36 }}>
           <Scissors size={28} color="#378add" style={{ margin: "0 auto 16px", display: "block" }} />
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>Salon Royale</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>SuperKlip</h1>
           <p style={{ fontSize: 10, color: "rgba(232,237,245,0.35)", letterSpacing: "0.3em", textTransform: "uppercase" }}>Log ind på din profil</p>
         </div>
 

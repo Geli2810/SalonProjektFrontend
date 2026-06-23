@@ -414,7 +414,7 @@ const BookingPage = () => {
       `}</style>
 
       <nav style={{ background: "rgba(8,12,20,0.95)", borderBottom: "1px solid rgba(55,138,221,0.1)", padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
-        <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>Salon Royale</Link>
+        <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>SuperKlip</Link>
         <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
           <Link to="/book" style={{ color: "#378add", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none", borderBottom: "1px solid rgba(55,138,221,0.4)", paddingBottom: 2 }}>Booking</Link>
           {currentUser ? (

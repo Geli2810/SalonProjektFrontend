@@ -322,7 +322,7 @@ export default function AdminPanel({ onLogout }) {
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
             <Scissors size={18} color="#378add" />
-            <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "0.1em", color: "#e8edf5", textTransform: "uppercase" }}>Salon Royale</span>
+            <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "0.1em", color: "#e8edf5", textTransform: "uppercase" }}>SuperKlip</span>
           </Link>
           <span style={{ color: "rgba(55,138,221,0.4)", fontSize: 14 }}>|</span>
           <span style={{ fontSize: 11, color: "#378add", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase" }}>Frisørpanel</span>
