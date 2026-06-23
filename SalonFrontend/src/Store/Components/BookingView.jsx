@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import axios from 'axios';
-import { Calendar, Clock, Scissors, CheckCircle, LogOut, Mail, RefreshCw } from 'lucide-react';
+import { Clock, Scissors, CheckCircle, LogOut, Mail, RefreshCw } from 'lucide-react';
 import { getCurrentUser } from "../../SYSAdmin";
 
 const BookingPage = () => {
@@ -16,6 +16,7 @@ const BookingPage = () => {
   const [selectedFrisor, setSelectedFrisor] = useState("");
   const [selectedBehandling, setSelectedBehandling] = useState("");
   const [occupiedSlots, setOccupiedSlots] = useState([]);
+  const [rawOccupied, setRawOccupied] = useState([]);
   const [selectedTime, setSelectedTime] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
@@ -52,6 +53,7 @@ const BookingPage = () => {
       axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${selectedFrisor}`)
         .then(res => {
           const events = res.data.map(slot => ({
+            id: `occupied-${slot.startTid}`,
             title: slot.title?.toLowerCase().includes("skole") ? "Skole" : "Optaget",
             start: slot.startTid,
             end: slot.slutTid,
@@ -60,12 +62,31 @@ const BookingPage = () => {
             borderColor: 'transparent',
             textColor: '#ffffff'
           }));
+          setRawOccupied(events);
           setOccupiedSlots(events);
+          setSelectedTime(null);
         });
     } else {
+      setRawOccupied([]);
       setOccupiedSlots([]);
+      setSelectedTime(null);
     }
   }, [selectedFrisor, API_URL]);
+
+  const handleSelect = (info) => {
+    setSelectedTime(info);
+    // Tilføj valgt tid som blåt event i kalenderen
+    const selectedEvent = {
+      id: "selected",
+      title: "Din valgte tid",
+      start: info.startStr,
+      end: info.endStr,
+      backgroundColor: "#185fa5",
+      borderColor: "#378add",
+      textColor: "#ffffff"
+    };
+    setOccupiedSlots([...rawOccupied, selectedEvent]);
+  };
 
   if (currentUser?.rolle === "frisor") {
     return (
@@ -116,7 +137,7 @@ const BookingPage = () => {
       <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ background: "rgba(15,110,86,0.1)", border: "1px solid rgba(93,202,165,0.2)", borderRadius: 28, padding: "64px 48px", textAlign: "center", maxWidth: 480 }}>
           <CheckCircle size={48} color="#5dcaa5" style={{ margin: "0 auto 24px" }} />
-          <h1 style={{ fontSize: 32, fontWeight: 300, marginBottom: 12, letterSpacing: "-0.01em" }}>Tiden er din!</h1>
+          <h1 style={{ fontSize: 32, fontWeight: 300, marginBottom: 12 }}>Tiden er din!</h1>
           <p style={{ color: "rgba(232,237,245,0.45)", fontSize: 14, marginBottom: 40, lineHeight: 1.7 }}>Reservationen er gennemført. Vi har sendt en bekræftelse til din mail.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Link to="/" style={{ background: "#185fa5", color: "#e6f1fb", padding: "16px 32px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Gå til forsiden</Link>
@@ -132,98 +153,44 @@ const BookingPage = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
       <style>{`
-        /* RESET ALL FC BACKGROUND EVENTS */
-        .fc-bg-event,
-        .fc-timegrid-bg-harness,
-        .fc-timegrid-col-bg,
-        .fc-timegrid-bg-events,
-        .fc-non-business { display: none !important; }
-
-        /* BASE */
+        .fc-timegrid-slot { background-image: none !important; }
+        .fc-bg-event, .fc-timegrid-bg-harness, .fc-timegrid-col-bg, .fc-timegrid-bg-events, .fc-non-business { display: none !important; }
+        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
+        .fc-timegrid-col-events { overflow: hidden !important; }
+        .fc-event { max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; }
         .fc { font-family: 'Segoe UI', Arial, sans-serif !important; }
         .fc .fc-view-harness { background: transparent !important; }
-
-        /* TOOLBAR */
         .fc .fc-toolbar { padding: 0 0 20px 0; }
         .fc .fc-toolbar-title { font-size: 14px !important; font-weight: 600 !important; color: rgba(232,237,245,0.7) !important; letter-spacing: 0.05em !important; }
-        .fc .fc-button-group { gap: 6px; display: flex; }
-        .fc .fc-button {
-          background: rgba(24,95,165,0.25) !important;
-          border: 1px solid rgba(55,138,221,0.25) !important;
-          border-radius: 10px !important;
-          font-size: 10px !important;
-          font-weight: 700 !important;
-          letter-spacing: 0.12em !important;
-          text-transform: uppercase !important;
-          padding: 7px 14px !important;
-          color: rgba(133,183,235,0.8) !important;
-          transition: all 0.2s !important;
-          box-shadow: none !important;
-        }
+        .fc .fc-button { background: rgba(24,95,165,0.25) !important; border: 1px solid rgba(55,138,221,0.25) !important; border-radius: 10px !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; padding: 7px 14px !important; color: rgba(133,183,235,0.8) !important; transition: all 0.2s !important; box-shadow: none !important; }
         .fc .fc-button:hover { background: rgba(24,95,165,0.45) !important; border-color: rgba(55,138,221,0.5) !important; box-shadow: none !important; }
         .fc .fc-button:focus { box-shadow: none !important; outline: none !important; }
         .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: rgba(24,95,165,0.6) !important; box-shadow: none !important; }
-        .fc .fc-today-button { opacity: 1 !important; }
-
-        /* GRID */
         .fc .fc-scrollgrid { border: 1px solid rgba(55,138,221,0.1) !important; border-radius: 16px !important; overflow: hidden !important; }
         .fc td, .fc th { border-color: rgba(55,138,221,0.08) !important; }
         .fc .fc-scrollgrid-section > td { border: none !important; }
-
-        /* HEADER */
         .fc .fc-col-header { background: rgba(8,12,20,0.8) !important; }
         .fc .fc-col-header-cell { padding: 14px 0 !important; border-bottom: 1px solid rgba(55,138,221,0.12) !important; }
         .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: rgba(232,237,245,0.35) !important; text-decoration: none !important; }
         .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #378add !important; }
-
-        /* TIME SLOTS */
         .fc .fc-timegrid-slot { height: 48px !important; border-color: rgba(55,138,221,0.06) !important; }
         .fc .fc-timegrid-slot-minor { border-color: rgba(55,138,221,0.03) !important; }
         .fc .fc-timegrid-slot-label { border: none !important; }
         .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 500 !important; padding-right: 10px !important; }
         .fc .fc-timegrid-axis { background: rgba(8,12,20,0.6) !important; border-right: 1px solid rgba(55,138,221,0.08) !important; }
-
-        /* TODAY */
         .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
-
-        /* NOW INDICATOR */
         .fc .fc-timegrid-now-indicator-line { border-color: #378add !important; border-width: 1.5px !important; }
         .fc .fc-timegrid-now-indicator-arrow { border-top-color: #378add !important; border-bottom-color: #378add !important; }
-
-        /* SELECTION */
-        .fc-highlight { background: rgba(55,138,221,0.1) !important; border: 2px solid #378add !important; border-radius: 10px !important; }
-        .fc-mirror { background: rgba(55,138,221,0.12) !important; border: 2px dashed rgba(55,138,221,0.6) !important; border-radius: 10px !important; opacity: 0.8 !important; }
-
-        /* EVENTS */
-        .fc-event { border-radius: 8px !important; padding: 3px 8px !important; font-size: 11px !important; font-weight: 600 !important; overflow: hidden !important; max-width: 100% !important; box-sizing: border-box !important; }
-        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
-        .fc-timegrid-col-events { overflow: hidden !important; }
-
-        /* SCROLLBAR */
+        .fc-highlight { background: rgba(24,95,165,0.15) !important; border: 2px solid #378add !important; border-radius: 10px !important; }
+        .fc-mirror { background: rgba(24,95,165,0.2) !important; border: 2px dashed rgba(55,138,221,0.6) !important; border-radius: 10px !important; }
+        .fc-event { border-radius: 8px !important; padding: 3px 8px !important; font-size: 11px !important; font-weight: 600 !important; }
         .fc-scroller::-webkit-scrollbar { width: 4px; }
         .fc-scroller::-webkit-scrollbar-track { background: transparent; }
         .fc-scroller::-webkit-scrollbar-thumb { background: rgba(55,138,221,0.2); border-radius: 4px; }
-
-        /* DISABLED DAYS */
         .fc-day-disabled { background: rgba(0,0,0,0.15) !important; opacity: 0.4 !important; cursor: not-allowed !important; }
-
         @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .spin { animation: spin 1s linear infinite; }
-        .select-field {
-          width: 100%;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(55,138,221,0.18);
-          color: #e8edf5;
-          padding: 14px 18px;
-          border-radius: 14px;
-          font-size: 13px;
-          outline: none;
-          cursor: pointer;
-          transition: border 0.2s;
-          appearance: none;
-          -webkit-appearance: none;
-        }
+        .select-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.18); color: #e8edf5; padding: 14px 18px; border-radius: 14px; font-size: 13px; outline: none; cursor: pointer; transition: border 0.2s; appearance: none; -webkit-appearance: none; }
         .select-field:focus { border-color: rgba(55,138,221,0.5); }
         .select-field option { background: #0f1623; color: #e8edf5; }
       `}</style>
@@ -250,7 +217,7 @@ const BookingPage = () => {
       {dataLoading && (
         <div style={{ maxWidth: 900, margin: "60px auto", padding: "0 40px", textAlign: "center" }}>
           <div style={{ background: "rgba(24,95,165,0.08)", border: "1px solid rgba(55,138,221,0.15)", borderRadius: 20, padding: "48px 32px" }}>
-            <RefreshCw size={28} color="#378add" className="spin" style={{ margin: "0 auto 16px", display: "block", animation: "spin 1s linear infinite" }} />
+            <RefreshCw size={28} color="#378add" style={{ margin: "0 auto 16px", display: "block", animation: "spin 1s linear infinite" }} />
             <p style={{ fontSize: 15, color: "rgba(232,237,245,0.7)", marginBottom: 8 }}>Forbinder til serveren...</p>
             <p style={{ fontSize: 12, color: "rgba(232,237,245,0.3)", marginBottom: 20 }}>Serveren vågner op — dette tager typisk 20-40 sekunder</p>
             {loadingSeconds > 5 && (
@@ -270,28 +237,23 @@ const BookingPage = () => {
       {!dataLoading && (
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 40px", display: "grid", gridTemplateColumns: "1fr 340px", gap: 28 }}>
 
-          {/* VENSTRE */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
             {/* STEP 1 */}
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 20, padding: "28px 28px", animation: "fadeUp 0.5s ease forwards" }}>
+            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 20, padding: "28px", animation: "fadeUp 0.5s ease forwards" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
                 <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#85b7eb" }}>1</div>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.7)", letterSpacing: "0.05em" }}>Vælg frisør og behandling</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.7)" }}>Vælg frisør og behandling</span>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                <div style={{ position: "relative" }}>
-                  <select className="select-field" value={selectedFrisor} onChange={e => { setSelectedFrisor(e.target.value); setSelectedTime(null); }}>
-                    <option value="">Vælg frisør</option>
-                    {frisorer.map(f => <option key={f.frisorId} value={f.frisorId}>{f.navn}</option>)}
-                  </select>
-                </div>
-                <div style={{ position: "relative" }}>
-                  <select className="select-field" value={selectedBehandling} onChange={e => setSelectedBehandling(e.target.value)}>
-                    <option value="">Vælg behandling</option>
-                    {behandlinger.map(b => <option key={b.behandlingId} value={b.behandlingId}>{b.navn} — {b.pris} kr.</option>)}
-                  </select>
-                </div>
+                <select className="select-field" value={selectedFrisor} onChange={e => { setSelectedFrisor(e.target.value); setSelectedTime(null); }}>
+                  <option value="">Vælg frisør</option>
+                  {frisorer.map(f => <option key={f.frisorId} value={f.frisorId}>{f.navn}</option>)}
+                </select>
+                <select className="select-field" value={selectedBehandling} onChange={e => setSelectedBehandling(e.target.value)}>
+                  <option value="">Vælg behandling</option>
+                  {behandlinger.map(b => <option key={b.behandlingId} value={b.behandlingId}>{b.navn} — {b.pris} kr.</option>)}
+                </select>
               </div>
             </div>
 
@@ -301,12 +263,12 @@ const BookingPage = () => {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#85b7eb" }}>2</div>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.7)", letterSpacing: "0.05em" }}>Vælg en ledig tid</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.7)" }}>Vælg en ledig tid</span>
                   </div>
                   <div style={{ display: "flex", gap: 16, fontSize: 11, color: "rgba(232,237,245,0.25)" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#374151", display: "inline-block" }} />Optaget</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#ef4444", display: "inline-block" }} />Skole</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(55,138,221,0.3)", border: "1.5px solid #378add", display: "inline-block" }} />Din tid</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#185fa5", display: "inline-block" }} />Din valgte tid</span>
                   </div>
                 </div>
 
@@ -320,9 +282,10 @@ const BookingPage = () => {
                   expandRows={true}
                   selectable={true}
                   selectOverlap={false}
-                  selectMirror={true}
+                  selectMirror={false}
+                  unselectAuto={false}
                   events={occupiedSlots}
-                  select={(info) => setSelectedTime(info)}
+                  select={handleSelect}
                   locale="da"
                   nowIndicator={true}
                   validRange={{ start: today }}
@@ -345,7 +308,7 @@ const BookingPage = () => {
               filter: selectedTime ? "none" : "blur(1px)",
               pointerEvents: selectedTime ? "all" : "none"
             }}>
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: "#e8edf5", marginBottom: 24, letterSpacing: "0.02em" }}>Gennemfør booking</h2>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: "#e8edf5", marginBottom: 24 }}>Gennemfør booking</h2>
 
               {selectedTime && (
                 <form onSubmit={handleBooking} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -353,6 +316,9 @@ const BookingPage = () => {
                     <Clock size={13} color="rgba(55,138,221,0.5)" style={{ marginBottom: 6 }} />
                     <p style={{ fontSize: 13, fontWeight: 600, color: "#e8edf5", lineHeight: 1.5 }}>
                       {new Date(selectedTime.startStr).toLocaleString('da-DK', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <p style={{ fontSize: 11, color: "rgba(232,237,245,0.35)", marginTop: 4 }}>
+                      — {new Date(selectedTime.endStr).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
 
@@ -378,7 +344,7 @@ const BookingPage = () => {
                     </div>
                   )}
 
-                  <button type="submit" style={{ width: "100%", background: "#185fa5", color: "#e6f1fb", padding: "16px", borderRadius: 14, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" }}>
+                  <button type="submit" style={{ width: "100%", background: "#185fa5", color: "#e6f1fb", padding: "16px", borderRadius: 14, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: "pointer" }}>
                     Bestil tid nu
                   </button>
                 </form>
