@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { getCurrentUser } from "../../SYSAdmin";
 import { LogOut } from "lucide-react";
+import axios from "axios";
 
 export default function LandingPage({ currentUser, onLogout }) {
   const [user, setUser] = useState(currentUser || null);
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(false);
   const heroRef = useRef(null);
+  const [ratingData, setRatingData] = useState({ average: 0, count: 0, distribution: null });
 
   useEffect(() => {
     setUser(currentUser || getCurrentUser());
@@ -20,10 +22,17 @@ export default function LandingPage({ currentUser, onLogout }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    axios.get('https://salonproject.onrender.com/api/Rating/average')
+      .then(res => setRatingData(res.data))
+      .catch(() => console.log('Kunne ikke hente ratings'));
+  }, []);
+
   const handleLogout = () => {
     sessionStorage.clear();
     setUser(null);
     if (onLogout) onLogout();
+    window.location.href = "/";
   };
 
   return (
@@ -74,13 +83,12 @@ export default function LandingPage({ currentUser, onLogout }) {
           0%, 100% { transform: rotate(-10deg); }
           50% { transform: rotate(10deg); }
         }
-        @keyframes lineGrow {
-          from { width: 0; }
-          to { width: 80px; }
-        }
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-10px); }
+        }
+        @keyframes growBar {
+          from { width: 0 !important; }
         }
         .nav-link {
           color: rgba(232,237,245,0.6);
@@ -153,11 +161,6 @@ export default function LandingPage({ currentUser, onLogout }) {
           display: inline-block;
           animation: scissors 3s ease-in-out infinite;
           transform-origin: center;
-        }
-        .stat-item {
-          text-align: center;
-          animation: fadeUp 0.8s ease forwards;
-          opacity: 0;
         }
         .floating-card {
           animation: float 4s ease-in-out infinite;
@@ -301,7 +304,7 @@ export default function LandingPage({ currentUser, onLogout }) {
         }}>✂</div>
       </section>
 
-      {/* STATS */}
+      {/* STATS - DYNAMISK RATING */}
       <section style={{ position: "relative", zIndex: 1, padding: "0 48px 80px" }}>
         <div style={{
           maxWidth: 900, margin: "0 auto",
@@ -310,9 +313,9 @@ export default function LandingPage({ currentUser, onLogout }) {
           border: "1px solid rgba(55,138,221,0.15)"
         }}>
           {[
-            { num: "500+", label: "Glade kunder" },
+            { num: ratingData.count > 0 ? `${ratingData.count}` : "0", label: "Anmeldelser" },
             { num: "6+", label: "Års erfaring" },
-            { num: "4.9★", label: "Gennemsnit" }
+            { num: ratingData.average > 0 ? `${ratingData.average}★` : "Ny", label: "Gennemsnit" }
           ].map((s, i) => (
             <div key={i} style={{
               padding: "40px 20px", textAlign: "center",
@@ -326,6 +329,63 @@ export default function LandingPage({ currentUser, onLogout }) {
           ))}
         </div>
       </section>
+
+      {/* RATING FORDELING */}
+      {ratingData.distribution && ratingData.count > 0 && (
+        <section style={{ position: "relative", zIndex: 1, padding: "0 48px 80px" }}>
+          <div style={{ maxWidth: 900, margin: "0 auto" }}>
+            <div style={{
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(55,138,221,0.1)",
+              borderRadius: 20,
+              padding: "32px"
+            }}>
+              <h3 style={{ fontSize: 14, color: "rgba(232,237,245,0.6)", marginBottom: 20, letterSpacing: "0.05em" }}>
+                📊 Kunde tilfredshed
+              </h3>
+              
+              {[
+                { stars: 5, emoji: "😍", label: "Fantastisk", color: "#22c55e", count: ratingData.distribution.femStjerner },
+                { stars: 4, emoji: "😊", label: "God", color: "#86efac", count: ratingData.distribution.fireStjerner },
+                { stars: 3, emoji: "😐", label: "OK", color: "#fbbf24", count: ratingData.distribution.treStjerner },
+                { stars: 2, emoji: "😕", label: "Skuffende", color: "#f97316", count: ratingData.distribution.toStjerner },
+                { stars: 1, emoji: "😡", label: "Dårlig", color: "#ef4444", count: ratingData.distribution.enStjerne }
+              ].map((e, i) => {
+                const barWidth = ratingData.count > 0 ? (e.count / ratingData.count) * 100 : 0;
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                    <span style={{ fontSize: 18 }}>{e.emoji}</span>
+                    <span style={{ fontSize: 11, color: "rgba(232,237,245,0.5)", width: 30 }}>{e.stars}★</span>
+                    <div style={{ 
+                      flex: 1, 
+                      height: 6, 
+                      background: "rgba(255,255,255,0.05)", 
+                      borderRadius: 3,
+                      overflow: "hidden"
+                    }}>
+                      <div style={{
+                        width: `${barWidth}%`,
+                        height: "100%",
+                        background: e.color,
+                        borderRadius: 3,
+                        transition: "width 1s ease",
+                        minWidth: e.count > 0 ? "4px" : "0"
+                      }} />
+                    </div>
+                    <span style={{ fontSize: 10, color: "rgba(232,237,245,0.3)", width: 25, textAlign: "right" }}>
+                      {e.count}
+                    </span>
+                  </div>
+                );
+              })}
+              
+              <p style={{ fontSize: 10, color: "rgba(232,237,245,0.2)", marginTop: 16, textAlign: "center" }}>
+                Baseret på {ratingData.count} anmeldelser
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* SERVICES */}
       <section style={{ position: "relative", zIndex: 1, padding: "40px 48px 100px" }}>

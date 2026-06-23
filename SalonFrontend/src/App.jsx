@@ -9,6 +9,7 @@ import Register from "./Store/Components/Register";
 import AdminPanel from "./Store/Components/AdminPanel";
 import { getCurrentUser } from './SYSAdmin';
 import SalonBackground from "./Store/Components/SalonBackground";
+import StarRating from "./Store/Components/StarRating";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(getCurrentUser());

@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from "../../SYSAdmin";
 import { User, LogOut, Scissors, Clock, Mail, Phone, RefreshCw, Save, X, AlertCircle, Trash2, Edit3, XCircle } from 'lucide-react';
+import StarRating from './StarRating';
+
 
 export default function CustomerDash() {
   const navigate = useNavigate();
@@ -137,7 +139,7 @@ export default function CustomerDash() {
     return { bg: "rgba(55,138,221,0.15)", color: "#85b7eb", border: "rgba(55,138,221,0.3)" };
   };
 
-  const BookingCard = ({ b, faded, showCancel }) => {
+const BookingCard = ({ b, faded, showCancel }) => {
     const sc = statusStyle(b.status);
     const kanAflyses = !faded && canCancel(b.startTid);
     
@@ -148,118 +150,137 @@ export default function CustomerDash() {
         borderRadius: 18, 
         padding: "18px 20px", 
         display: "flex", 
-        alignItems: "center", 
-        justifyContent: "space-between", 
+        flexDirection: "column",
         marginBottom: 12, 
         opacity: faded ? 0.5 : 1, 
         transition: "all 0.3s ease"
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 18, flex: 1 }}>
-          <div style={{ 
-            width: 48, height: 48, 
-            background: faded ? "rgba(255,255,255,0.04)" : "rgba(24,95,165,0.15)", 
-            border: `1px solid ${faded ? "rgba(255,255,255,0.08)" : "rgba(55,138,221,0.25)"}`, 
-            borderRadius: 14, 
-            display: "flex", flexDirection: "column", 
-            alignItems: "center", justifyContent: "center", 
-            color: faded ? "rgba(232,237,245,0.4)" : "#85b7eb", 
-            flexShrink: 0 
-          }}>
-            <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", lineHeight: 1 }}>
-              {new Date(b.startTid).toLocaleString('da-DK', { month: 'short' })}
-            </span>
-            <span style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, marginTop: 2 }}>
-              {new Date(b.startTid).getDate()}
-            </span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 18, flex: 1 }}>
+            <div style={{ 
+              width: 48, height: 48, 
+              background: faded ? "rgba(255,255,255,0.04)" : "rgba(24,95,165,0.15)", 
+              border: `1px solid ${faded ? "rgba(255,255,255,0.08)" : "rgba(55,138,221,0.25)"}`, 
+              borderRadius: 14, 
+              display: "flex", flexDirection: "column", 
+              alignItems: "center", justifyContent: "center", 
+              color: faded ? "rgba(232,237,245,0.4)" : "#85b7eb", 
+              flexShrink: 0 
+            }}>
+              <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", lineHeight: 1 }}>
+                {new Date(b.startTid).toLocaleString('da-DK', { month: 'short' })}
+              </span>
+              <span style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, marginTop: 2 }}>
+                {new Date(b.startTid).getDate()}
+              </span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: faded ? "rgba(232,237,245,0.5)" : "#e8edf5" }}>
+                {b.behandlingNavn || "Service"}
+              </p>
+              <p style={{ fontSize: 11, color: "rgba(232,237,245,0.35)", display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+                <Clock size={10} /> 
+                {new Date(b.startTid).toLocaleString('da-DK', { 
+                  weekday: 'short',
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </p>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 15, fontWeight: 600, color: faded ? "rgba(232,237,245,0.5)" : "#e8edf5" }}>
-              {b.behandlingNavn || "Service"}
-            </p>
-            <p style={{ fontSize: 11, color: "rgba(232,237,245,0.35)", display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
-              <Clock size={10} /> 
-              {new Date(b.startTid).toLocaleString('da-DK', { 
-                weekday: 'short',
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}
-            </p>
-          </div>
-        </div>
-        
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {showCancel && kanAflyses && cancelBookingId !== b.bookingId && (
-            <button
-              onClick={() => setCancelBookingId(b.bookingId)}
-              style={{
-                background: "rgba(220,38,38,0.08)",
-                border: "1px solid rgba(220,38,38,0.2)",
-                color: "#fca5a5",
-                padding: "6px 12px",
-                borderRadius: 8,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                transition: "all 0.2s ease"
-              }}
-            >
-              <XCircle size={12} /> Aflys
-            </button>
-          )}
-
-          {cancelBookingId === b.bookingId && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeIn 0.2s ease" }}>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {showCancel && kanAflyses && cancelBookingId !== b.bookingId && (
               <button
-                onClick={() => handleCancelBooking(b.bookingId)}
+                onClick={() => setCancelBookingId(b.bookingId)}
                 style={{
-                  background: "rgba(220,38,38,0.2)",
-                  border: "1px solid rgba(220,38,38,0.4)",
-                  color: "#fff",
+                  background: "rgba(220,38,38,0.08)",
+                  border: "1px solid rgba(220,38,38,0.2)",
+                  color: "#fca5a5",
                   padding: "6px 12px",
                   borderRadius: 8,
                   fontSize: 9,
                   fontWeight: 700,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  transition: "all 0.2s ease"
                 }}
               >
-                Bekræft aflysning
+                <XCircle size={12} /> Aflys
               </button>
-              <button
-                onClick={() => setCancelBookingId(null)}
-                style={{
-                  background: "transparent",
-                  border: "1px solid rgba(55,138,221,0.2)",
-                  color: "rgba(133,183,235,0.8)",
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  cursor: "pointer"
-                }}
-              >
-                <X size={12} />
-              </button>
-            </div>
-          )}
+            )}
 
-          <span style={{ 
-            fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", 
-            padding: "6px 14px", borderRadius: 50, background: sc.bg, color: sc.color, 
-            border: `1px solid ${sc.border}`,
-            whiteSpace: "nowrap"
-          }}>
-            {b.status}
-          </span>
+            {cancelBookingId === b.bookingId && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeIn 0.2s ease" }}>
+                <button
+                  onClick={() => handleCancelBooking(b.bookingId)}
+                  style={{
+                    background: "rgba(220,38,38,0.2)",
+                    border: "1px solid rgba(220,38,38,0.4)",
+                    color: "#fff",
+                    padding: "6px 12px",
+                    borderRadius: 8,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    cursor: "pointer"
+                  }}
+                >
+                  Bekræft
+                </button>
+                <button
+                  onClick={() => setCancelBookingId(null)}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(55,138,221,0.2)",
+                    color: "rgba(133,183,235,0.8)",
+                    padding: "6px 10px",
+                    borderRadius: 8,
+                    cursor: "pointer"
+                  }}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+
+            <span style={{ 
+              fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", 
+              padding: "6px 14px", borderRadius: 50, background: sc.bg, color: sc.color, 
+              border: `1px solid ${sc.border}`,
+              whiteSpace: "nowrap"
+            }}>
+              {b.status}
+            </span>
+          </div>
         </div>
+
+        {/* ⭐ RATING - kun for tidligere bookinger der IKKE er aflyst */}
+        {faded && b.status !== "aflyst" && (
+          <div style={{ 
+            marginTop: 12, 
+            paddingTop: 12, 
+            borderTop: "1px solid rgba(55,138,221,0.06)" 
+          }}>
+            <p style={{ fontSize: 9, color: "rgba(232,237,245,0.3)", marginBottom: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              Din vurdering
+            </p>
+            <StarRating 
+              bookingId={b.bookingId} 
+              kundeId={user?.kundeId} 
+            />
+          </div>
+        )}
       </div>
     );
   };
 
+  
   return (
     <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
       <style>{`
