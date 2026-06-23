@@ -2,7 +2,7 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* FullCalendar — fjern LEDIG baggrund og fix events */
+/* FullCalendar fixes */
 .fc-timegrid-slot {
   background-image: none !important;
   background-color: transparent !important;
@@ -10,7 +10,6 @@
 
 .fc-bg-event,
 .fc-timegrid-bg-harness,
-.fc-timegrid-col-bg,
 .fc-timegrid-bg-events,
 .fc-non-business {
   display: none !important;
