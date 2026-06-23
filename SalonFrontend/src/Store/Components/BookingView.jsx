@@ -22,11 +22,39 @@ const BookingPage = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [loadingSeconds, setLoadingSeconds] = useState(0);
 
+  // Generer LEDIG baggrunds-events for alle 30-min slots de næste 14 dage
+  const genLedigEvents = () => {
+    const events = [];
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    for (let d = 0; d < 14; d++) {
+      const day = new Date(start);
+      day.setDate(start.getDate() + d);
+      for (let h = 10; h < 18; h++) {
+        for (let m = 0; m < 60; m += 30) {
+          const slotStart = new Date(day);
+          slotStart.setHours(h, m, 0, 0);
+          if (slotStart < new Date()) continue;
+          const slotEnd = new Date(slotStart);
+          slotEnd.setMinutes(slotStart.getMinutes() + 30);
+          events.push({
+            start: slotStart.toISOString(),
+            end: slotEnd.toISOString(),
+            display: "background",
+            classNames: ["ledig-bg"]
+          });
+        }
+      }
+    }
+    return events;
+  };
+
   const allEvents = [
+    ...genLedigEvents(),
     ...occupiedSlots,
     ...(selectedTime ? [{
       id: "selected",
-      title: "✓ Din valgte tid",
+      title: "VALGT",
       start: selectedTime.startStr,
       end: selectedTime.endStr,
       backgroundColor: "#1d4ed8",
@@ -135,13 +163,24 @@ const BookingPage = () => {
         .fc-timegrid-slot { background-image: none !important; background-color: transparent !important; }
         .fc-bg-event, .fc-timegrid-bg-harness, .fc-timegrid-col-bg, .fc-timegrid-bg-events, .fc-non-business { display: none !important; }
 
-        /* LEDIG tekst i HVER kolonne via col-bg baggrund */
-        .fc-timegrid-col .fc-timegrid-col-bg {
-          display: block !important;
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='52'><text x='50%' y='50%' font-family='Arial,sans-serif' font-weight='800' font-size='8' fill='rgba(99,179,237,0.35)' opacity='1' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'>LEDIG</text></svg>") !important;
-          background-repeat: repeat-y !important;
-          background-size: 100% 52px !important;
-          pointer-events: none !important;
+        /* LEDIG background events */
+        .ledig-bg {
+          background: rgba(55,138,221,0.04) !important;
+          opacity: 1 !important;
+          position: relative;
+        }
+        .ledig-bg::after {
+          content: 'LEDIG';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 8px;
+          font-weight: 800;
+          letter-spacing: 0.15em;
+          color: rgba(99,179,237,0.4);
+          white-space: nowrap;
+          pointer-events: none;
         }
 
         /* FIX EVENTS */
@@ -181,9 +220,7 @@ const BookingPage = () => {
 
         /* I DAG */
         .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
-        .fc .fc-day-today .fc-timegrid-col-bg {
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='52'><text x='50%' y='50%' font-family='Arial,sans-serif' font-weight='800' font-size='8' fill='rgba(96,165,250,0.4)' opacity='1' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'>LEDIG</text></svg>") !important;
-        }
+        .fc .fc-day-today .ledig-bg::after { color: rgba(96,165,250,0.5); }
 
         /* NU INDIKATOR */
         .fc .fc-timegrid-now-indicator-line { border-color: #60a5fa !important; border-width: 2px !important; }
@@ -191,15 +228,17 @@ const BookingPage = () => {
 
         /* SELECTION — kun i den specifikke kolonne */
         .fc-highlight {
-          background: rgba(29,78,216,0.2) !important;
+          background: rgba(29,78,216,0.35) !important;
           border: 2px solid #3b82f6 !important;
-          border-radius: 10px !important;
+          border-radius: 8px !important;
+          box-shadow: 0 0 16px rgba(59,130,246,0.5) !important;
         }
         .fc-mirror {
-          background: rgba(29,78,216,0.25) !important;
-          border: 2px dashed rgba(59,130,246,0.8) !important;
-          border-radius: 10px !important;
-          opacity: 0.9 !important;
+          background: rgba(29,78,216,0.4) !important;
+          border: 2px solid #3b82f6 !important;
+          border-radius: 8px !important;
+          opacity: 1 !important;
+          box-shadow: 0 0 16px rgba(59,130,246,0.5) !important;
         }
 
         /* VALGT TID */
@@ -214,7 +253,7 @@ const BookingPage = () => {
 
         /* DISABLED */
         .fc-day-disabled { background: rgba(0,0,0,0.2) !important; opacity: 0.25 !important; }
-        .fc-day-disabled .fc-timegrid-col-bg { background-image: none !important; }
+        .fc-day-disabled .ledig-bg { display: none !important; }
 
         /* SCROLLBAR */
         .fc-scroller::-webkit-scrollbar { width: 3px; }

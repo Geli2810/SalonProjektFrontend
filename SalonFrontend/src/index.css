@@ -8,9 +8,6 @@
   background-color: transparent !important;
 }
 
-.fc-bg-event,
-.fc-timegrid-bg-harness,
-.fc-timegrid-bg-events,
 .fc-non-business {
   display: none !important;
 }
@@ -25,7 +22,5 @@
 }
 
 .fc-event {
-  max-width: 100% !important;
-  overflow: hidden !important;
   box-sizing: border-box !important;
 }
