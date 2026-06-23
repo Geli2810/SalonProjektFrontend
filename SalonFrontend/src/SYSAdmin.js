@@ -1,7 +1,6 @@
 import store from "./Store/SYS-Store.js";
 
 export function getCurrentUser() {
-  // Søg først efter frisør, så kunde, så currentUser
   const frisor = sessionStorage.getItem("frisor");
   if (frisor) return { ...JSON.parse(frisor), rolle: "frisor" };
   
@@ -14,7 +13,7 @@ export function getCurrentUser() {
     return { ...parsed, rolle: parsed.rolle || "kunde" };
   }
   
-  return null; // GÆST = null
+  return null;
 }
 
 export default store;

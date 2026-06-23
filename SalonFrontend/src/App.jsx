@@ -54,7 +54,7 @@ function App() {
             element={<LandingPage currentUser={currentUser} onLogout={handleLogout} />} 
           />
           
-          {/* LOGIN - kun hvis IKKE logget ind */}
+          {/* LOGIN */}
           <Route 
             path="/login" 
             element={
@@ -64,7 +64,7 @@ function App() {
             } 
           />
           
-          {/* REGISTRERING - kun hvis IKKE logget ind */}
+          {/* REGISTRERING */}
           <Route 
             path="/register" 
             element={
@@ -84,7 +84,7 @@ function App() {
             } 
           />
           
-          {/* BOOKING - ALTID tilgængelig (også for gæster) */}
+          {/* BOOKING - ALTID tilgængelig */}
           <Route 
             path="/book" 
             element={<BookingPage />} 

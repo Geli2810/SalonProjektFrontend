@@ -100,13 +100,11 @@ export default function CustomerDash() {
     }
   };
 
-  // AFLYS BOOKING
   const handleCancelBooking = async (bookingId) => {
     try {
       await axios.put(`${API_URL}/api/Booking/cancel/${bookingId}`);
       setSuccess('Tiden er aflyst ✓');
       setCancelBookingId(null);
-      // Opdater bookinger
       fetchBookings(user.kundeId);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -115,17 +113,17 @@ export default function CustomerDash() {
     }
   };
 
-  // Tjek om en booking kan aflyses (mindst 1 dag før)
   const canCancel = (startTid) => {
     const now = new Date();
     const bookingDate = new Date(startTid);
     const diffInHours = (bookingDate - now) / (1000 * 60 * 60);
-    return diffInHours >= 24; // Mindst 24 timer før
+    return diffInHours >= 24;
   };
 
+  // FIXET: Logger ud én gang
   const handleLogout = () => { 
-    sessionStorage.clear(); 
-    navigate("/"); 
+    sessionStorage.clear();
+    window.location.href = "/";
   };
 
   if (!user) return null;
@@ -190,7 +188,6 @@ export default function CustomerDash() {
         </div>
         
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* AFLYS KNAP */}
           {showCancel && kanAflyses && cancelBookingId !== b.bookingId && (
             <button
               onClick={() => setCancelBookingId(b.bookingId)}
@@ -210,14 +207,11 @@ export default function CustomerDash() {
                 gap: 4,
                 transition: "all 0.2s ease"
               }}
-              onMouseEnter={e => e.target.style.background = "rgba(220,38,38,0.15)"}
-              onMouseLeave={e => e.target.style.background = "rgba(220,38,38,0.08)"}
             >
               <XCircle size={12} /> Aflys
             </button>
           )}
 
-          {/* BEKRÆFT AFLYSNING */}
           {cancelBookingId === b.bookingId && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeIn 0.2s ease" }}>
               <button
@@ -253,7 +247,6 @@ export default function CustomerDash() {
             </div>
           )}
 
-          {/* STATUS BADGE */}
           <span style={{ 
             fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", 
             padding: "6px 14px", borderRadius: 50, background: sc.bg, color: sc.color, 
@@ -347,7 +340,7 @@ export default function CustomerDash() {
 
       {/* NAVBAR */}
       <nav style={{ background: "rgba(8,12,20,0.85)", borderBottom: "1px solid rgba(55,138,221,0.1)", padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
-        <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>✂ SuperKlip</Link>
+        <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>✂ Salon Royale</Link>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <Link to="/book" style={{ color: "rgba(232,237,245,0.5)", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>Book tid</Link>
           <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(162,45,45,0.12)", border: "1px solid rgba(162,45,45,0.2)", color: "#f09595", padding: "7px 14px", borderRadius: 50, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}>
@@ -358,7 +351,6 @@ export default function CustomerDash() {
 
       <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px" }}>
         
-        {/* SUCCESS/ERROR */}
         {success && (
           <div style={{ background: "rgba(15,110,86,0.1)", border: "1px solid rgba(93,202,165,0.2)", color: "#5dcaa5", padding: "14px 20px", borderRadius: 12, marginBottom: 24, fontSize: 13, fontWeight: 600, animation: "fadeIn 0.3s ease" }}>
             {success}
@@ -394,46 +386,27 @@ export default function CustomerDash() {
                   </p>
                 </div>
 
-                {/* REDIGERBARE FELTER */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div>
                     <label style={{ fontSize: 9, fontWeight: 700, color: "rgba(232,237,245,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>
                       <User size={9} style={{ display: "inline", marginRight: 4 }} /> Navn
                     </label>
-                    <input
-                      className="dash-input"
-                      value={formData.navn}
-                      onChange={e => setFormData({ ...formData, navn: e.target.value })}
-                      disabled={!editing}
-                    />
+                    <input className="dash-input" value={formData.navn} onChange={e => setFormData({ ...formData, navn: e.target.value })} disabled={!editing} />
                   </div>
-                  
                   <div>
                     <label style={{ fontSize: 9, fontWeight: 700, color: "rgba(232,237,245,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>
                       <Mail size={9} style={{ display: "inline", marginRight: 4 }} /> Email
                     </label>
-                    <input
-                      className="dash-input"
-                      value={formData.email}
-                      onChange={e => setFormData({ ...formData, email: e.target.value })}
-                      disabled={!editing}
-                    />
+                    <input className="dash-input" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} disabled={!editing} />
                   </div>
-                  
                   <div>
                     <label style={{ fontSize: 9, fontWeight: 700, color: "rgba(232,237,245,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>
                       <Phone size={9} style={{ display: "inline", marginRight: 4 }} /> Telefon
                     </label>
-                    <input
-                      className="dash-input"
-                      value={formData.telefon}
-                      onChange={e => setFormData({ ...formData, telefon: e.target.value })}
-                      disabled={!editing}
-                    />
+                    <input className="dash-input" value={formData.telefon} onChange={e => setFormData({ ...formData, telefon: e.target.value })} disabled={!editing} />
                   </div>
                 </div>
 
-                {/* KNAPPER */}
                 <div style={{ marginTop: 20, borderTop: "1px solid rgba(55,138,221,0.1)", paddingTop: 20 }}>
                   {editing ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -444,10 +417,7 @@ export default function CustomerDash() {
                           <><Save size={14} /> Gem ændringer</>
                         )}
                       </button>
-                      <button className="btn-cancel" onClick={() => {
-                        setEditing(false);
-                        setFormData({ navn: user.navn, email: user.email, telefon: user.telefon });
-                      }}>
+                      <button className="btn-cancel" onClick={() => { setEditing(false); setFormData({ navn: user.navn, email: user.email, telefon: user.telefon }); }}>
                         <X size={14} /> Fortryd
                       </button>
                     </div>
@@ -457,7 +427,6 @@ export default function CustomerDash() {
                         <Edit3 size={14} /> Redigér profil
                       </button>
                       
-                      {/* SLET KONTO */}
                       {!showDeleteConfirm ? (
                         <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
                           <Trash2 size={14} /> Slet konto
@@ -467,20 +436,9 @@ export default function CustomerDash() {
                           <p style={{ fontSize: 11, color: "#fca5a5", marginBottom: 10, fontWeight: 600, textAlign: "center" }}>
                             Skriv "SLET" for at bekræfte:
                           </p>
-                          <input
-                            className="dash-input"
-                            placeholder='Skriv "SLET"'
-                            value={deleteInput}
-                            onChange={e => setDeleteInput(e.target.value)}
-                            style={{ marginBottom: 10, textAlign: "center" }}
-                          />
+                          <input className="dash-input" placeholder='Skriv "SLET"' value={deleteInput} onChange={e => setDeleteInput(e.target.value)} style={{ marginBottom: 10, textAlign: "center" }} />
                           <div style={{ display: "flex", gap: 8 }}>
-                            <button 
-                              className="btn-delete" 
-                              onClick={handleDeleteAccount}
-                              disabled={deleteInput !== 'SLET'}
-                              style={{ flex: 1, opacity: deleteInput !== 'SLET' ? 0.4 : 1 }}
-                            >
+                            <button className="btn-delete" onClick={handleDeleteAccount} disabled={deleteInput !== 'SLET'} style={{ flex: 1, opacity: deleteInput !== 'SLET' ? 0.4 : 1 }}>
                               Bekræft
                             </button>
                             <button className="btn-cancel" onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }}>
@@ -514,7 +472,6 @@ export default function CustomerDash() {
 
             {!backendLoading && (
               <>
-                {/* KOMMENDE BOOKINGER */}
                 <div>
                   <h3 style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                     <Scissors size={15} color="#378add" /> Kommende aftaler
@@ -529,11 +486,7 @@ export default function CustomerDash() {
                   ) : (
                     <>
                       {kommende.map(b => (
-                        <BookingCard 
-                          key={b.bookingId} 
-                          b={b} 
-                          showCancel={true} 
-                        />
+                        <BookingCard key={b.bookingId} b={b} showCancel={true} />
                       ))}
                       <p style={{ fontSize: 10, color: "rgba(232,237,245,0.2)", marginTop: 8, fontStyle: "italic" }}>
                         ℹ️ Aflysning mulig indtil 24 timer før
@@ -542,7 +495,6 @@ export default function CustomerDash() {
                   )}
                 </div>
 
-                {/* TIDLIGERE BOOKINGER */}
                 {tidligere.length > 0 && (
                   <div>
                     <h3 style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.35)", letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
