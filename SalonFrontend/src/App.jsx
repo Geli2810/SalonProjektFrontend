@@ -23,7 +23,7 @@ function App() {
       sessionStorage.setItem("frisor", JSON.stringify(userData));
     } else {
       sessionStorage.setItem("user", JSON.stringify(userData));
-      sessionStorage.setItem("currentUser", JSON.stringify(userData)); // VIGTIG!
+      sessionStorage.setItem("currentUser", JSON.stringify(userData));
     }
     
     const updatedUser = getCurrentUser();
@@ -54,7 +54,7 @@ function App() {
             element={<LandingPage currentUser={currentUser} onLogout={handleLogout} />} 
           />
           
-          {/* LOGIN */}
+          {/* LOGIN - kun hvis IKKE logget ind */}
           <Route 
             path="/login" 
             element={
@@ -64,7 +64,7 @@ function App() {
             } 
           />
           
-          {/* REGISTRERING */}
+          {/* REGISTRERING - kun hvis IKKE logget ind */}
           <Route 
             path="/register" 
             element={
@@ -74,7 +74,7 @@ function App() {
             } 
           />
           
-          {/* DASHBOARD - kun for kunder */}
+          {/* DASHBOARD - KUN for kunder */}
           <Route 
             path="/dashboard" 
             element={
@@ -84,7 +84,7 @@ function App() {
             } 
           />
           
-          {/* BOOKING - altid tilgængelig */}
+          {/* BOOKING - ALTID tilgængelig (også for gæster) */}
           <Route 
             path="/book" 
             element={<BookingPage />} 
@@ -100,7 +100,7 @@ function App() {
             } 
           />
           
-          {/* ADMIN PANEL - kun for frisører */}
+          {/* ADMIN PANEL - KUN for frisører */}
           <Route 
             path="/admin" 
             element={

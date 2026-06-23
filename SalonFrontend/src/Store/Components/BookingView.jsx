@@ -200,37 +200,48 @@ const BookingPage = () => {
   };
 
   const handleBooking = async (e) => {
-    e.preventDefault();
-    if (!selectedTime) return;
-    setIsSubmitting(true);
-    try {
-      await axios.post(`${API_URL}/api/Booking/create`, {
-        frisorId: parseInt(selectedFrisor),
-        behandlingId: parseInt(selectedBehandling),
-        startTid: selectedTime.startStr,
-        kundeId: currentUser?.kundeId || null,
-        email: currentUser?.email || guestEmail,
-        navn: currentUser?.navn || "Gæst",
-        telefon: currentUser?.telefon || "00000000"
-      });
-      await fetchOccupiedSlots(selectedFrisor);
-      setSelectedTime(null);
-      setIsSuccess(true);
-    } catch (err) {
-      const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
-      alert(msg);
-      if (String(msg).toLowerCase().includes("optaget")) {
-        try {
-          await fetchOccupiedSlots(selectedFrisor);
-          setSelectedTime(null);
-        } catch (e2) {
-          console.error("Kunne ikke opdatere optagede tider:", e2);
+      e.preventDefault();
+      if (!selectedTime) return;
+      
+      setIsSubmitting(true);
+      
+      try {
+        await axios.post(`${API_URL}/api/Booking/create`, {
+          frisorId: parseInt(selectedFrisor),
+          behandlingId: parseInt(selectedBehandling),
+          startTid: selectedTime.startStr,
+          kundeId: currentUser?.kundeId || null,        // null for gæster
+          email: currentUser?.email || guestEmail,       // gæsters email
+          navn: currentUser?.navn || "Gæst",             // "Gæst" hvis ikke logget ind
+          telefon: currentUser?.telefon || "00000000"
+        });
+        
+        // Opdater slots og reset valgt tid
+        await fetchOccupiedSlots(selectedFrisor);
+        setSelectedTime(null);
+        setIsSuccess(true);
+        
+        // 🚫 GEM IKKE GÆST I SESSION STORAGE!
+        // Kun Login/Register komponenterne sætter sessionStorage!
+        
+      } catch (err) {
+        const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
+        alert(msg);
+        
+        // Hvis tiden er optaget, opdater slots automatisk
+        if (String(msg).toLowerCase().includes("optaget")) {
+          try {
+            await fetchOccupiedSlots(selectedFrisor);
+            setSelectedTime(null);
+          } catch (e2) {
+            console.error("Kunne ikke opdatere optagede tider:", e2);
+          }
         }
+      } finally {
+        setIsSubmitting(false);
       }
-    } finally {
-      setIsSubmitting(false);
-    }
   };
+
 
   const handleLogout = () => {
     sessionStorage.clear();

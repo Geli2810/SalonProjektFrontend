@@ -14,7 +14,7 @@ export function getCurrentUser() {
     return { ...parsed, rolle: parsed.rolle || "kunde" };
   }
   
-  return null;
+  return null; // GÆST = null
 }
 
 export default store;
