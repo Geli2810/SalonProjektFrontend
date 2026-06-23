@@ -54,7 +54,7 @@ const BookingPage = () => {
     ...occupiedSlots,
     ...(selectedTime ? [{
       id: "selected",
-      title: "VALGT",
+      title: "DIN TID ✓",
       start: selectedTime.startStr,
       end: selectedTime.endStr,
       backgroundColor: "#1d4ed8",
@@ -157,114 +157,297 @@ const BookingPage = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
+    <div className="booking-page-wrapper" style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
       <style>{`
-        /* FJERN ALT GAMMELT */
-        .fc-timegrid-slot { background-image: none !important; background-color: transparent !important; }
-        .fc-bg-event, .fc-timegrid-bg-harness, .fc-timegrid-col-bg, .fc-timegrid-bg-events, .fc-non-business { display: none !important; }
-
-        /* LEDIG background events */
-        .ledig-bg {
-          background: rgba(55,138,221,0.04) !important;
-          opacity: 1 !important;
-          position: relative;
+        /* ============================================
+           BOOKING PAGE - ALLE FULLCALENDAR STYLES
+           ============================================ */
+        
+        /* OVERSKRIV INDEX.CSS OG TAILWIND */
+        .booking-page-wrapper .fc-timegrid-slot { 
+          background-image: none !important; 
+          background-color: transparent !important; 
         }
-        .ledig-bg::after {
+        .booking-page-wrapper .fc-bg-event,
+        .booking-page-wrapper .fc-timegrid-bg-harness,
+        .booking-page-wrapper .fc-timegrid-col-bg,
+        .booking-page-wrapper .fc-timegrid-bg-events,
+        .booking-page-wrapper .fc-non-business { 
+          display: none !important; 
+        }
+
+        /* === LEDIG SLOTS - VISES PER KOLONNE === */
+        .booking-page-wrapper .ledig-bg {
+          background: rgba(55,138,221,0.03) !important;
+          border: 1px dashed rgba(55,138,221,0.08) !important;
+          opacity: 1 !important;
+          cursor: pointer !important;
+          transition: all 0.2s ease !important;
+        }
+        .booking-page-wrapper .ledig-bg::after {
           content: 'LEDIG';
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          font-size: 8px;
+          font-size: 7px;
           font-weight: 800;
-          letter-spacing: 0.15em;
-          color: rgba(99,179,237,0.4);
+          letter-spacing: 0.12em;
+          color: rgba(99,179,237,0.2);
           white-space: nowrap;
           pointer-events: none;
+          transition: all 0.2s ease;
+        }
+        .booking-page-wrapper .ledig-bg:hover {
+          background: rgba(55,138,221,0.12) !important;
+          border-color: rgba(55,138,221,0.3) !important;
+        }
+        .booking-page-wrapper .ledig-bg:hover::after {
+          color: rgba(99,179,237,0.6) !important;
+          font-size: 8px;
         }
 
-        /* FIX EVENTS */
-        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
-        .fc-timegrid-col-events { overflow: hidden !important; margin: 0 2px !important; }
-        .fc-event { max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; border-radius: 8px !important; padding: 4px 8px !important; font-size: 11px !important; font-weight: 700 !important; }
-
-        /* BASE */
-        .fc { font-family: 'Segoe UI', Arial, sans-serif !important; }
-        .fc .fc-view-harness { background: transparent !important; }
-        .fc .fc-toolbar { padding: 0 0 20px 0; }
-        .fc .fc-toolbar-title { font-size: 13px !important; font-weight: 600 !important; color: rgba(232,237,245,0.6) !important; }
-
-        /* KNAPPER */
-        .fc .fc-button { background: rgba(24,95,165,0.2) !important; border: 1px solid rgba(55,138,221,0.2) !important; border-radius: 10px !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; padding: 7px 14px !important; color: rgba(133,183,235,0.7) !important; box-shadow: none !important; transition: all 0.2s !important; }
-        .fc .fc-button:hover { background: rgba(24,95,165,0.4) !important; box-shadow: none !important; }
-        .fc .fc-button:focus { box-shadow: none !important; outline: none !important; }
-        .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: rgba(24,95,165,0.55) !important; box-shadow: none !important; }
-
-        /* GRID */
-        .fc .fc-scrollgrid { border: 1px solid rgba(55,138,221,0.1) !important; border-radius: 16px !important; overflow: hidden !important; }
-        .fc td, .fc th { border-color: rgba(55,138,221,0.07) !important; }
-        .fc .fc-scrollgrid-section > td { border: none !important; }
-
-        /* HEADER */
-        .fc .fc-col-header { background: rgba(8,12,20,0.9) !important; }
-        .fc .fc-col-header-cell { padding: 12px 0 !important; border-bottom: 1px solid rgba(55,138,221,0.1) !important; }
-        .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: rgba(232,237,245,0.3) !important; text-decoration: none !important; }
-        .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #60a5fa !important; }
-
-        /* SLOTS */
-        .fc .fc-timegrid-slot { height: 52px !important; border-color: rgba(55,138,221,0.05) !important; }
-        .fc .fc-timegrid-slot-minor { border-color: rgba(55,138,221,0.02) !important; }
-        .fc .fc-timegrid-slot-label { border: none !important; }
-        .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 600 !important; padding-right: 10px !important; }
-        .fc .fc-timegrid-axis { background: rgba(8,12,20,0.7) !important; border-right: 1px solid rgba(55,138,221,0.07) !important; }
-
-        /* I DAG */
-        .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
-        .fc .fc-day-today .ledig-bg::after { color: rgba(96,165,250,0.5); }
-
-        /* NU INDIKATOR */
-        .fc .fc-timegrid-now-indicator-line { border-color: #60a5fa !important; border-width: 2px !important; }
-        .fc .fc-timegrid-now-indicator-arrow { border-top-color: #60a5fa !important; border-bottom-color: #60a5fa !important; }
-
-        /* SELECTION — kun i den specifikke kolonne */
-        .fc-highlight {
-          background: rgba(29,78,216,0.35) !important;
-          border: 2px solid #3b82f6 !important;
-          border-radius: 8px !important;
-          box-shadow: 0 0 16px rgba(59,130,246,0.5) !important;
+        /* === FIX EVENTS === */
+        .booking-page-wrapper .fc-timegrid-event-harness { 
+          overflow: hidden !important; 
+          max-width: 100% !important; 
         }
-        .fc-mirror {
-          background: rgba(29,78,216,0.4) !important;
+        .booking-page-wrapper .fc-timegrid-col-events { 
+          overflow: hidden !important; 
+          margin: 0 2px !important; 
+        }
+        .booking-page-wrapper .fc-event { 
+          max-width: 100% !important; 
+          overflow: hidden !important; 
+          box-sizing: border-box !important; 
+          border-radius: 6px !important; 
+          padding: 3px 6px !important; 
+          font-size: 10px !important; 
+          font-weight: 700 !important; 
+        }
+
+        /* === BASE CALENDAR === */
+        .booking-page-wrapper .fc { 
+          font-family: 'Segoe UI', Arial, sans-serif !important; 
+        }
+        .booking-page-wrapper .fc .fc-view-harness { 
+          background: transparent !important; 
+        }
+        .booking-page-wrapper .fc .fc-toolbar { 
+          padding: 0 0 16px 0; 
+        }
+        .booking-page-wrapper .fc .fc-toolbar-title { 
+          font-size: 12px !important; 
+          font-weight: 600 !important; 
+          color: rgba(232,237,245,0.5) !important; 
+        }
+
+        /* === KNAPPER === */
+        .booking-page-wrapper .fc .fc-button { 
+          background: rgba(24,95,165,0.15) !important; 
+          border: 1px solid rgba(55,138,221,0.15) !important; 
+          border-radius: 8px !important; 
+          font-size: 10px !important; 
+          font-weight: 700 !important; 
+          letter-spacing: 0.1em !important; 
+          text-transform: uppercase !important; 
+          padding: 6px 12px !important; 
+          color: rgba(133,183,235,0.6) !important; 
+          box-shadow: none !important; 
+          transition: all 0.2s !important; 
+        }
+        .booking-page-wrapper .fc .fc-button:hover { 
+          background: rgba(24,95,165,0.3) !important; 
+          box-shadow: none !important; 
+        }
+        .booking-page-wrapper .fc .fc-button:focus { 
+          box-shadow: none !important; 
+          outline: none !important; 
+        }
+        .booking-page-wrapper .fc .fc-button-active, 
+        .booking-page-wrapper .fc .fc-button:not(:disabled):active { 
+          background: rgba(24,95,165,0.45) !important; 
+          box-shadow: none !important; 
+        }
+
+        /* === GRID === */
+        .booking-page-wrapper .fc .fc-scrollgrid { 
+          border: 1px solid rgba(55,138,221,0.08) !important; 
+          border-radius: 14px !important; 
+          overflow: hidden !important; 
+        }
+        .booking-page-wrapper .fc td, 
+        .booking-page-wrapper .fc th { 
+          border-color: rgba(55,138,221,0.05) !important; 
+        }
+        .booking-page-wrapper .fc .fc-scrollgrid-section > td { 
+          border: none !important; 
+        }
+
+        /* === KOLONNE HEADER === */
+        .booking-page-wrapper .fc .fc-col-header { 
+          background: rgba(8,12,20,0.9) !important; 
+        }
+        .booking-page-wrapper .fc .fc-col-header-cell { 
+          padding: 10px 0 !important; 
+          border-bottom: 1px solid rgba(55,138,221,0.08) !important; 
+        }
+        .booking-page-wrapper .fc .fc-col-header-cell-cushion { 
+          font-size: 10px !important; 
+          font-weight: 700 !important; 
+          letter-spacing: 0.08em !important; 
+          text-transform: uppercase !important; 
+          color: rgba(232,237,245,0.25) !important; 
+          text-decoration: none !important; 
+        }
+        .booking-page-wrapper .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { 
+          color: #60a5fa !important; 
+        }
+
+        /* === TIDSSLOTS === */
+        .booking-page-wrapper .fc .fc-timegrid-slot { 
+          height: 48px !important; 
+          border-color: rgba(55,138,221,0.04) !important; 
+        }
+        .booking-page-wrapper .fc .fc-timegrid-slot-minor { 
+          border-color: rgba(55,138,221,0.02) !important; 
+        }
+        .booking-page-wrapper .fc .fc-timegrid-slot-label { 
+          border: none !important; 
+        }
+        .booking-page-wrapper .fc .fc-timegrid-slot-label-cushion { 
+          font-size: 9px !important; 
+          color: rgba(232,237,245,0.18) !important; 
+          font-weight: 600 !important; 
+          padding-right: 8px !important; 
+        }
+        .booking-page-wrapper .fc .fc-timegrid-axis { 
+          background: rgba(8,12,20,0.6) !important; 
+          border-right: 1px solid rgba(55,138,221,0.06) !important; 
+        }
+
+        /* === I DAG === */
+        .booking-page-wrapper .fc .fc-day-today { 
+          background: rgba(55,138,221,0.02) !important; 
+        }
+        .booking-page-wrapper .fc .fc-day-today .ledig-bg { 
+          background: rgba(55,138,221,0.05) !important; 
+          border-color: rgba(55,138,221,0.15) !important; 
+        }
+        .booking-page-wrapper .fc .fc-day-today .ledig-bg::after { 
+          color: rgba(96,165,250,0.4); 
+        }
+
+        /* === NU INDIKATOR === */
+        .booking-page-wrapper .fc .fc-timegrid-now-indicator-line { 
+          border-color: #60a5fa !important; 
+          border-width: 2px !important; 
+        }
+        .booking-page-wrapper .fc .fc-timegrid-now-indicator-arrow { 
+          border-top-color: #60a5fa !important; 
+          border-bottom-color: #60a5fa !important; 
+        }
+
+        /* === KLIK SELECTION HIGHLIGHT (DETTE VISER HVOR DU KLIKKER) === */
+        .booking-page-wrapper .fc-highlight {
+          background: rgba(29,78,216,0.5) !important;
           border: 2px solid #3b82f6 !important;
-          border-radius: 8px !important;
+          border-radius: 6px !important;
+          box-shadow: 0 0 20px rgba(59,130,246,0.6), inset 0 0 20px rgba(59,130,246,0.2) !important;
+          animation: booking-glow-pulse 1.5s ease-in-out infinite !important;
+        }
+        @keyframes booking-glow-pulse {
+          0%, 100% { 
+            box-shadow: 0 0 15px rgba(59,130,246,0.4), inset 0 0 15px rgba(59,130,246,0.1); 
+          }
+          50% { 
+            box-shadow: 0 0 30px rgba(59,130,246,0.8), inset 0 0 30px rgba(59,130,246,0.3); 
+          }
+        }
+
+        /* === DRAG MIRROR === */
+        .booking-page-wrapper .fc-mirror {
+          background: rgba(29,78,216,0.6) !important;
+          border: 2px solid #3b82f6 !important;
+          border-radius: 6px !important;
           opacity: 1 !important;
-          box-shadow: 0 0 16px rgba(59,130,246,0.5) !important;
+          box-shadow: 0 0 25px rgba(59,130,246,0.7) !important;
         }
 
-        /* VALGT TID */
-        .selected-event {
-          box-shadow: 0 0 0 2px #60a5fa, 0 4px 20px rgba(29,78,216,0.5) !important;
-          animation: pulse-blue 2s ease-in-out infinite !important;
+        /* === VALGT TID (BLÅ EVENT) === */
+        .booking-page-wrapper .selected-event {
+          box-shadow: 0 0 0 3px #60a5fa, 0 4px 25px rgba(29,78,216,0.6) !important;
+          animation: booking-pulse-blue 2s ease-in-out infinite !important;
+          font-size: 12px !important;
+          text-align: center !important;
         }
-        @keyframes pulse-blue {
-          0%, 100% { box-shadow: 0 0 0 2px #60a5fa, 0 4px 16px rgba(29,78,216,0.4); }
-          50% { box-shadow: 0 0 0 4px rgba(96,165,250,0.4), 0 4px 28px rgba(29,78,216,0.6); }
+        @keyframes booking-pulse-blue {
+          0%, 100% { 
+            box-shadow: 0 0 0 3px #60a5fa, 0 4px 20px rgba(29,78,216,0.5); 
+          }
+          50% { 
+            box-shadow: 0 0 0 5px rgba(96,165,250,0.5), 0 4px 35px rgba(29,78,216,0.8); 
+          }
         }
 
-        /* DISABLED */
-        .fc-day-disabled { background: rgba(0,0,0,0.2) !important; opacity: 0.25 !important; }
-        .fc-day-disabled .ledig-bg { display: none !important; }
+        /* === DISABLED DAGE === */
+        .booking-page-wrapper .fc-day-disabled { 
+          background: rgba(0,0,0,0.3) !important; 
+          opacity: 0.2 !important; 
+        }
+        .booking-page-wrapper .fc-day-disabled .ledig-bg { 
+          display: none !important; 
+        }
 
-        /* SCROLLBAR */
-        .fc-scroller::-webkit-scrollbar { width: 3px; }
-        .fc-scroller::-webkit-scrollbar-thumb { background: rgba(55,138,221,0.15); border-radius: 4px; }
+        /* === SCROLLBAR === */
+        .booking-page-wrapper .fc-scroller::-webkit-scrollbar { 
+          width: 3px; 
+        }
+        .booking-page-wrapper .fc-scroller::-webkit-scrollbar-thumb { 
+          background: rgba(55,138,221,0.12); 
+          border-radius: 4px; 
+        }
 
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        /* === CURSOR STYLES === */
+        .booking-page-wrapper .fc-timegrid-col {
+          cursor: pointer !important;
+        }
+        .booking-page-wrapper .fc-timegrid-event {
+          cursor: not-allowed !important;
+        }
 
-        .select-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.15); color: #e8edf5; padding: 14px 18px; border-radius: 14px; font-size: 13px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; transition: border 0.2s; }
-        .select-field:focus { border-color: rgba(55,138,221,0.45); }
-        .select-field option { background: #0f1623; color: #e8edf5; }
+        /* === CUSTOM ANIMATIONS === */
+        @keyframes booking-fadeUp { 
+          from { opacity: 0; transform: translateY(16px); } 
+          to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes booking-spin { 
+          from { transform: rotate(0deg); } 
+          to { transform: rotate(360deg); } 
+        }
+
+        /* === FORM STYLES === */
+        .booking-page-wrapper .select-field { 
+          width: 100%; 
+          background: rgba(255,255,255,0.04); 
+          border: 1px solid rgba(55,138,221,0.15); 
+          color: #e8edf5; 
+          padding: 14px 18px; 
+          border-radius: 14px; 
+          font-size: 13px; 
+          outline: none; 
+          cursor: pointer; 
+          appearance: none; 
+          -webkit-appearance: none; 
+          transition: border 0.2s; 
+        }
+        .booking-page-wrapper .select-field:focus { 
+          border-color: rgba(55,138,221,0.45); 
+        }
+        .booking-page-wrapper .select-field option { 
+          background: #0f1623; 
+          color: #e8edf5; 
+        }
       `}</style>
 
       {/* NAVBAR */}
@@ -289,7 +472,7 @@ const BookingPage = () => {
       {dataLoading && (
         <div style={{ maxWidth: 600, margin: "80px auto", padding: "0 40px", textAlign: "center" }}>
           <div style={{ background: "rgba(24,95,165,0.07)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 20, padding: "48px 32px" }}>
-            <RefreshCw size={26} color="#378add" style={{ margin: "0 auto 16px", display: "block", animation: "spin 1s linear infinite" }} />
+            <RefreshCw size={26} color="#378add" style={{ margin: "0 auto 16px", display: "block", animation: "booking-spin 1s linear infinite" }} />
             <p style={{ fontSize: 15, color: "rgba(232,237,245,0.65)", marginBottom: 6 }}>Forbinder til serveren...</p>
             <p style={{ fontSize: 12, color: "rgba(232,237,245,0.25)", marginBottom: 24 }}>Typisk 20-40 sekunder</p>
             <div style={{ background: "rgba(55,138,221,0.08)", borderRadius: 50, height: 3, overflow: "hidden", maxWidth: 280, margin: "0 auto" }}>
@@ -305,7 +488,7 @@ const BookingPage = () => {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
             {/* STEP 1 */}
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "24px 28px", animation: "fadeUp 0.5s ease forwards" }}>
+            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "24px 28px", animation: "booking-fadeUp 0.5s ease forwards" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
                 <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#85b7eb", flexShrink: 0 }}>1</div>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Vælg frisør og behandling</span>
@@ -324,7 +507,7 @@ const BookingPage = () => {
 
             {/* STEP 2 KALENDER */}
             {selectedFrisor && selectedBehandling && (
-              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "24px 28px", animation: "fadeUp 0.4s ease forwards" }}>
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "24px 28px", animation: "booking-fadeUp 0.4s ease forwards" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(24,95,165,0.3)", border: "1px solid rgba(55,138,221,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#85b7eb", flexShrink: 0 }}>2</div>
