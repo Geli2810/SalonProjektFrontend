@@ -22,39 +22,11 @@ const BookingPage = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [loadingSeconds, setLoadingSeconds] = useState(0);
 
-  // Generer LEDIG baggrunds-events for alle 30-min slots de næste 14 dage
-  const genLedigEvents = () => {
-    const events = [];
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    for (let d = 0; d < 14; d++) {
-      const day = new Date(start);
-      day.setDate(start.getDate() + d);
-      for (let h = 10; h < 18; h++) {
-        for (let m = 0; m < 60; m += 30) {
-          const slotStart = new Date(day);
-          slotStart.setHours(h, m, 0, 0);
-          if (slotStart < new Date()) continue;
-          const slotEnd = new Date(slotStart);
-          slotEnd.setMinutes(slotStart.getMinutes() + 30);
-          events.push({
-            start: slotStart.toISOString(),
-            end: slotEnd.toISOString(),
-            display: "background",
-            classNames: ["ledig-bg"]
-          });
-        }
-      }
-    }
-    return events;
-  };
-
   const allEvents = [
-    ...genLedigEvents(),
     ...occupiedSlots,
     ...(selectedTime ? [{
       id: "selected",
-      title: "VALGT",
+      title: "✓ DIN VALGTE TID",
       start: selectedTime.startStr,
       end: selectedTime.endStr,
       backgroundColor: "#1d4ed8",
@@ -162,30 +134,15 @@ const BookingPage = () => {
         /* FJERN ALT GAMMELT */
         .fc-timegrid-slot { background-image: none !important; background-color: transparent !important; }
         .fc-non-business { display: none !important; }
-        /* LEDIG bg events skal IKKE skjules */
-        .fc-bg-event.ledig-bg { display: block !important; }
+        .fc-bg-event { display: none !important; }
 
-        /* LEDIG background events */
-        .fc-bg-event.ledig-bg {
-          background: rgba(55,138,221,0.05) !important;
-          opacity: 1 !important;
-          position: relative;
-          border-radius: 6px;
-          margin: 1px;
+        /* LEDIG via SVG baggrund paa hver dag-kolonne */
+        .fc .fc-timegrid-col.fc-day .fc-timegrid-col-frame {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2363b3ed' fill-opacity='0.35' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E");
+          background-repeat: repeat-y;
+          background-position: center top;
         }
-        .ledig-bg::after {
-          content: 'LEDIG';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 8px;
-          font-weight: 800;
-          letter-spacing: 0.15em;
-          color: rgba(99,179,237,0.4);
-          white-space: nowrap;
-          pointer-events: none;
-        }
+        .fc .fc-timegrid-col.fc-day-disabled .fc-timegrid-col-frame { background-image: none; }
 
         /* FIX EVENTS */
         .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
@@ -224,7 +181,7 @@ const BookingPage = () => {
 
         /* I DAG */
         .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
-        .fc .fc-day-today .ledig-bg::after { color: rgba(96,165,250,0.5); }
+        .fc .fc-day-today .fc-timegrid-col-frame { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2360a5fa' fill-opacity='0.45' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E") !important; }
 
         /* NU INDIKATOR */
         .fc .fc-timegrid-now-indicator-line { border-color: #60a5fa !important; border-width: 2px !important; }
@@ -257,7 +214,6 @@ const BookingPage = () => {
 
         /* DISABLED */
         .fc-day-disabled { background: rgba(0,0,0,0.2) !important; opacity: 0.25 !important; }
-        .fc-day-disabled .ledig-bg { display: none !important; }
 
         /* SCROLLBAR */
         .fc-scroller::-webkit-scrollbar { width: 3px; }
