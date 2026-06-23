@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from "../../SYSAdmin";
-import { User, LogOut, Scissors, Clock, Mail, Phone, RefreshCw, Save, X, AlertCircle, Trash2, Edit3 } from 'lucide-react';
+import { User, LogOut, Scissors, Clock, Mail, Phone, RefreshCw, Save, X, AlertCircle, Trash2, Edit3, XCircle } from 'lucide-react';
 
 export default function CustomerDash() {
   const navigate = useNavigate();
@@ -17,10 +17,10 @@ export default function CustomerDash() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [cancelBookingId, setCancelBookingId] = useState(null);
 
   const API_URL = "https://salonproject.onrender.com";
 
-  // Form data
   const [formData, setFormData] = useState({
     navn: '',
     email: '',
@@ -37,8 +37,13 @@ export default function CustomerDash() {
       telefon: savedUser.telefon || ''
     });
     
+    fetchBookings(savedUser.kundeId);
+  }, [navigate]);
+
+  const fetchBookings = (kundeId) => {
+    setBackendLoading(true);
     const timer = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
-    axios.get(`${API_URL}/api/Booking/user/${savedUser.kundeId}`)
+    axios.get(`${API_URL}/api/Booking/user/${kundeId}`)
       .then(res => { 
         setMyBookings(res.data); 
         setLoading(false); 
@@ -52,7 +57,7 @@ export default function CustomerDash() {
         clearInterval(timer); 
       });
     return () => clearInterval(timer);
-  }, [navigate]);
+  };
 
   useEffect(() => {
     if (!user || user.rolle !== "kunde") navigate("/login");
@@ -66,8 +71,8 @@ export default function CustomerDash() {
     try {
       await axios.put(`${API_URL}/api/Kunde/update/${user.kundeId}`, formData);
       
-      // Opdater session storage
       const updatedUser = { ...user, ...formData };
+      sessionStorage.setItem('user', JSON.stringify(updatedUser));
       sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
       setUser(updatedUser);
       
@@ -95,7 +100,33 @@ export default function CustomerDash() {
     }
   };
 
-  const handleLogout = () => { sessionStorage.clear(); navigate("/"); };
+  // AFLYS BOOKING
+  const handleCancelBooking = async (bookingId) => {
+    try {
+      await axios.put(`${API_URL}/api/Booking/cancel/${bookingId}`);
+      setSuccess('Tiden er aflyst ✓');
+      setCancelBookingId(null);
+      // Opdater bookinger
+      fetchBookings(user.kundeId);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Kunne ikke aflyse tid');
+      setTimeout(() => setError(''), 5000);
+    }
+  };
+
+  // Tjek om en booking kan aflyses (mindst 1 dag før)
+  const canCancel = (startTid) => {
+    const now = new Date();
+    const bookingDate = new Date(startTid);
+    const diffInHours = (bookingDate - now) / (1000 * 60 * 60);
+    return diffInHours >= 24; // Mindst 24 timer før
+  };
+
+  const handleLogout = () => { 
+    sessionStorage.clear(); 
+    navigate("/"); 
+  };
 
   if (!user) return null;
 
@@ -108,12 +139,14 @@ export default function CustomerDash() {
     return { bg: "rgba(55,138,221,0.15)", color: "#85b7eb", border: "rgba(55,138,221,0.3)" };
   };
 
-  const BookingCard = ({ b, faded }) => {
+  const BookingCard = ({ b, faded, showCancel }) => {
     const sc = statusStyle(b.status);
+    const kanAflyses = !faded && canCancel(b.startTid);
+    
     return (
       <div style={{ 
         background: "rgba(255,255,255,0.02)", 
-        border: "1px solid rgba(55,138,221,0.1)", 
+        border: `1px solid ${cancelBookingId === b.bookingId ? "rgba(220,38,38,0.3)" : "rgba(55,138,221,0.1)"}`, 
         borderRadius: 18, 
         padding: "18px 20px", 
         display: "flex", 
@@ -121,9 +154,9 @@ export default function CustomerDash() {
         justifyContent: "space-between", 
         marginBottom: 12, 
         opacity: faded ? 0.5 : 1, 
-        transition: "all 0.2s" 
+        transition: "all 0.3s ease"
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18, flex: 1 }}>
           <div style={{ 
             width: 48, height: 48, 
             background: faded ? "rgba(255,255,255,0.04)" : "rgba(24,95,165,0.15)", 
@@ -141,22 +174,95 @@ export default function CustomerDash() {
               {new Date(b.startTid).getDate()}
             </span>
           </div>
-          <div>
+          <div style={{ flex: 1 }}>
             <p style={{ fontSize: 15, fontWeight: 600, color: faded ? "rgba(232,237,245,0.5)" : "#e8edf5" }}>
               {b.behandlingNavn || "Service"}
             </p>
             <p style={{ fontSize: 11, color: "rgba(232,237,245,0.35)", display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
-              <Clock size={10} /> kl. {new Date(b.startTid).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
+              <Clock size={10} /> 
+              {new Date(b.startTid).toLocaleString('da-DK', { 
+                weekday: 'short',
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })}
             </p>
           </div>
         </div>
-        <span style={{ 
-          fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", 
-          padding: "6px 14px", borderRadius: 50, background: sc.bg, color: sc.color, 
-          border: `1px solid ${sc.border}` 
-        }}>
-          {b.status}
-        </span>
+        
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* AFLYS KNAP */}
+          {showCancel && kanAflyses && cancelBookingId !== b.bookingId && (
+            <button
+              onClick={() => setCancelBookingId(b.bookingId)}
+              style={{
+                background: "rgba(220,38,38,0.08)",
+                border: "1px solid rgba(220,38,38,0.2)",
+                color: "#fca5a5",
+                padding: "6px 12px",
+                borderRadius: 8,
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={e => e.target.style.background = "rgba(220,38,38,0.15)"}
+              onMouseLeave={e => e.target.style.background = "rgba(220,38,38,0.08)"}
+            >
+              <XCircle size={12} /> Aflys
+            </button>
+          )}
+
+          {/* BEKRÆFT AFLYSNING */}
+          {cancelBookingId === b.bookingId && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeIn 0.2s ease" }}>
+              <button
+                onClick={() => handleCancelBooking(b.bookingId)}
+                style={{
+                  background: "rgba(220,38,38,0.2)",
+                  border: "1px solid rgba(220,38,38,0.4)",
+                  color: "#fff",
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  cursor: "pointer"
+                }}
+              >
+                Bekræft aflysning
+              </button>
+              <button
+                onClick={() => setCancelBookingId(null)}
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(55,138,221,0.2)",
+                  color: "rgba(133,183,235,0.8)",
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  cursor: "pointer"
+                }}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
+
+          {/* STATUS BADGE */}
+          <span style={{ 
+            fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", 
+            padding: "6px 14px", borderRadius: 50, background: sc.bg, color: sc.color, 
+            border: `1px solid ${sc.border}`,
+            whiteSpace: "nowrap"
+          }}>
+            {b.status}
+          </span>
+        </div>
       </div>
     );
   };
@@ -408,6 +514,7 @@ export default function CustomerDash() {
 
             {!backendLoading && (
               <>
+                {/* KOMMENDE BOOKINGER */}
                 <div>
                   <h3 style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                     <Scissors size={15} color="#378add" /> Kommende aftaler
@@ -419,9 +526,23 @@ export default function CustomerDash() {
                       <p style={{ fontSize: 14, color: "rgba(232,237,245,0.35)", fontStyle: "italic", marginBottom: 12 }}>Du har ingen kommende aftaler.</p>
                       <Link to="/book" style={{ fontSize: 10, color: "#378add", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>Book en tid nu</Link>
                     </div>
-                  ) : kommende.map(b => <BookingCard key={b.bookingId} b={b} />)}
+                  ) : (
+                    <>
+                      {kommende.map(b => (
+                        <BookingCard 
+                          key={b.bookingId} 
+                          b={b} 
+                          showCancel={true} 
+                        />
+                      ))}
+                      <p style={{ fontSize: 10, color: "rgba(232,237,245,0.2)", marginTop: 8, fontStyle: "italic" }}>
+                        ℹ️ Aflysning mulig indtil 24 timer før
+                      </p>
+                    </>
+                  )}
                 </div>
 
+                {/* TIDLIGERE BOOKINGER */}
                 {tidligere.length > 0 && (
                   <div>
                     <h3 style={{ fontSize: 13, fontWeight: 600, color: "rgba(232,237,245,0.35)", letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>

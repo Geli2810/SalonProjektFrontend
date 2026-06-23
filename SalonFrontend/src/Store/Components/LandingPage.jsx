@@ -338,8 +338,6 @@ export default function LandingPage({ currentUser, onLogout }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
             {[
               { icon: "✂", title: "Klipning", desc: "Klassisk og moderne klipning tilpasset din hårtype og stil." },
-              { icon: "🎨", title: "Farvning", desc: "Fra subtile highlights til bold transformationer — alt er muligt." },
-              { icon: "💆", title: "Behandling", desc: "Forkæl dit hår med professionelle plejende behandlinger." },
               { icon: "✨", title: "Styling", desc: "Til hverdag, fest eller specielle lejligheder." }
             ].map((s, i) => (
               <div key={i} className="service-card" style={{ animationDelay: `${i * 0.1}s` }}>
