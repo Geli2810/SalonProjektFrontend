@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { getCurrentUser } from "../../SYSAdmin";
 import { LogOut } from "lucide-react";
 import axios from "axios";
-import SimpleStarClick from './SimpleStarClick';
 
 export default function LandingPage({ currentUser, onLogout }) {
   const [user, setUser] = useState(currentUser || null);
@@ -452,21 +451,4 @@ export default function LandingPage({ currentUser, onLogout }) {
     </div>
   );
 
-  {/* SIMPEL RATING - direkte på forsiden */}
-<section style={{ position: "relative", zIndex: 1, padding: "0 48px 80px" }}>
-  <div style={{ maxWidth: 500, margin: "0 auto", textAlign: "center" }}>
-    <div style={{
-      background: "rgba(255,255,255,0.02)",
-      border: "1px solid rgba(55,138,221,0.1)",
-      borderRadius: 20,
-      padding: "32px"
-    }}>
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#e8edf5" }}>
-        ⭐ Hvad synes du om os?
-      </h3>
-      
-      <SimpleStarClick />
-    </div>
-  </div>
-</section>
 }
