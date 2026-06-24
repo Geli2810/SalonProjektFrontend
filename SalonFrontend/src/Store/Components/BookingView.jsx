@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import daLocale from '@fullcalendar/core/locales/da';
 import axios from 'axios';
 import { Clock, Scissors, CheckCircle, LogOut, Mail, RefreshCw } from 'lucide-react';
 import { getCurrentUser } from "../../SYSAdmin";
@@ -11,7 +10,6 @@ import { getCurrentUser } from "../../SYSAdmin";
 const BookingPage = () => {
   const navigate = useNavigate();
   const API_URL = 'https://salonproject.onrender.com';
-
   const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const [frisorer, setFrisorer] = useState([]);
   const [behandlinger, setBehandlinger] = useState([]);
@@ -24,45 +22,6 @@ const BookingPage = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [loadingSeconds, setLoadingSeconds] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const localDateStr = (d = new Date()) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  };
-
-  const todayStr = localDateStr(new Date());
-  const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate() + 7);
-  const maxDateStr = localDateStr(maxDate);
-
-  // Fjern evt. Z (UTC-markør) saa FullCalendar laeser tiden som lokal tid
-  const stripZ = (t) => {
-    if (!t) return t;
-    let s = String(t);
-    if (s.endsWith("Z")) s = s.slice(0, -1);
-    s = s.replace(/[+-]\d{2}:\d{2}$/, "");
-    return s;
-  };
-
-  const mapOccupiedSlots = (data) => {
-    return data.map(slot => ({
-      id: `occ-${slot.startTid}-${slot.slutTid}`,
-      title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
-      start: stripZ(slot.startTid),
-      end: stripZ(slot.slutTid),
-      backgroundColor: slot.title?.toLowerCase().includes("skole") ? "#dc2626" : "#4b5563",
-      borderColor: "transparent",
-      textColor: "#ffffff"
-    }));
-  };
-
-  const fetchOccupiedSlots = async (frisorId) => {
-    if (!frisorId) return;
-    const res = await axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${frisorId}`);
-    setOccupiedSlots(mapOccupiedSlots(res.data));
-  };
 
   const allEvents = [
     ...occupiedSlots,
@@ -78,175 +37,57 @@ const BookingPage = () => {
     }] : [])
   ];
 
-  useEffect(() => {
-    setCurrentUser(getCurrentUser());
-  }, []);
+  useEffect(() => { setCurrentUser(getCurrentUser()); }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
-
     Promise.all([
       axios.get(`${API_URL}/api/HairDresserSalon/frisorer`),
       axios.get(`${API_URL}/api/HairDresserSalon/behandlinger`)
-    ])
-      .then(([fRes, bRes]) => {
-        setFrisorer(fRes.data);
-        setBehandlinger(bRes.data);
-      })
-      .catch(console.error)
-      .finally(() => {
-        setDataLoading(false);
-        clearInterval(timer);
-      });
-
+    ]).then(([fRes, bRes]) => {
+      setFrisorer(fRes.data);
+      setBehandlinger(bRes.data);
+    }).catch(console.error)
+      .finally(() => { setDataLoading(false); clearInterval(timer); });
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    if (!selectedFrisor) {
+    if (selectedFrisor) {
+      axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${selectedFrisor}`)
+        .then(res => {
+          setOccupiedSlots(res.data.map(slot => ({
+            id: `occ-${slot.startTid}`,
+            title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
+            start: slot.startTid,
+            end: slot.slutTid,
+            backgroundColor: slot.title?.toLowerCase().includes("skole") ? '#dc2626' : '#4b5563',
+            borderColor: 'transparent',
+            textColor: '#ffffff'
+          })));
+          setSelectedTime(null);
+        });
+    } else {
       setOccupiedSlots([]);
       setSelectedTime(null);
-      return;
     }
-
-    let isMounted = true;
-
-    const run = async () => {
-      try {
-        if (!isMounted) return;
-        await fetchOccupiedSlots(selectedFrisor);
-      } catch (e) {
-        console.error("Kunne ikke hente occupied slots:", e);
-      }
-    };
-
-    run();
-    const intervalId = setInterval(run, 10000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(intervalId);
-    };
   }, [selectedFrisor]);
 
-  const isTuesday = (date) => date.getDay() === 2;
-
-  const isInOpeningHours = (date) => {
-    const total = date.getHours() * 60 + date.getMinutes();
-    return total >= 10 * 60 && total <= 18 * 60;
-  };
-
-  const isInAllowedRange = (date) => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const start = new Date(todayStr);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(maxDateStr);
-    end.setHours(23, 59, 59, 999);
-    return d >= start && d <= end;
-  };
-
-  const hasOverlapWithOccupied = (start, end) => {
-    const s = start.getTime();
-    const e = end.getTime();
-    return occupiedSlots.some((ev) => {
-      const es = new Date(ev.start).getTime();
-      const ee = new Date(ev.end).getTime();
-      return s < ee && e > es;
-    });
-  };
-
-  const canPick = (start, end) => {
-    if (!selectedFrisor || !selectedBehandling) return false;
-    if (!start || !end) return false;
-    if (isTuesday(start) || isTuesday(end)) return false;
-    if (!isInAllowedRange(start) || !isInAllowedRange(end)) return false;
-    if (!isInOpeningHours(start) || !isInOpeningHours(end)) return false;
-    if (hasOverlapWithOccupied(start, end)) return false;
-    return true;
-  };
-
-  // Formatér til lokal tid UDEN tidszone-konvertering (undgaar UTC-forskydning)
-  const toLocalISO = (date) => {
-    const d = new Date(date);
-    const y = d.getFullYear();
-    const mo = String(d.getMonth() + 1).padStart(2, "0");
-    const da = String(d.getDate()).padStart(2, "0");
-    const h = String(d.getHours()).padStart(2, "0");
-    const mi = String(d.getMinutes()).padStart(2, "0");
-    const s = String(d.getSeconds()).padStart(2, "0");
-    return `${y}-${mo}-${da}T${h}:${mi}:${s}`;
-  };
-
-  const handleDateClick = (info) => {
-    const start = new Date(info.date);
-    const end = new Date(start.getTime() + 30 * 60 * 1000);
-    if (!canPick(start, end)) return;
-    setSelectedTime({
-      start, end,
-      startStr: toLocalISO(start),
-      endStr: toLocalISO(end)
-    });
-  };
-
-  const handleSelect = (info) => {
-    if (!canPick(info.start, info.end)) return;
-    setSelectedTime({
-      start: info.start,
-      end: info.end,
-      startStr: toLocalISO(info.start),
-      endStr: toLocalISO(info.end)
-    });
-  };
-
-  const handleBooking = async (e) => {
-      e.preventDefault();
-      if (!selectedTime) return;
-      
-      setIsSubmitting(true);
-      
-      try {
-        await axios.post(`${API_URL}/api/Booking/create`, {
-          frisorId: parseInt(selectedFrisor),
-          behandlingId: parseInt(selectedBehandling),
-          startTid: selectedTime.startStr,
-          kundeId: currentUser?.kundeId || null,        // null for gæster
-          email: currentUser?.email || guestEmail,       // gæsters email
-          navn: currentUser?.navn || "Gæst",             // "Gæst" hvis ikke logget ind
-          telefon: currentUser?.telefon || "00000000"
-        });
-        
-        // Opdater slots og reset valgt tid
-        await fetchOccupiedSlots(selectedFrisor);
-        setSelectedTime(null);
-        setIsSuccess(true);
-        
-        // 🚫 GEM IKKE GÆST I SESSION STORAGE!
-        // Kun Login/Register komponenterne sætter sessionStorage!
-        
-      } catch (err) {
-        const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
-        alert(msg);
-        
-        // Hvis tiden er optaget, opdater slots automatisk
-        if (String(msg).toLowerCase().includes("optaget")) {
-          try {
-            await fetchOccupiedSlots(selectedFrisor);
-            setSelectedTime(null);
-          } catch (e2) {
-            console.error("Kunne ikke opdatere optagede tider:", e2);
-          }
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
-  };
-
-
-  const handleLogout = () => {
-    sessionStorage.clear();
-    setCurrentUser(null);
-    navigate("/");
+  const fetchOccupiedSlots = async (frisorId) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${frisorId}`);
+      setOccupiedSlots(res.data.map(slot => ({
+        id: `occ-${slot.startTid}`,
+        title: slot.title?.toLowerCase().includes("skole") ? "SKOLE" : "OPTAGET",
+        start: slot.startTid,
+        end: slot.slutTid,
+        backgroundColor: slot.title?.toLowerCase().includes("skole") ? '#dc2626' : '#4b5563',
+        borderColor: 'transparent',
+        textColor: '#ffffff'
+      })));
+    } catch (err) {
+      console.error("Kunne ikke hente optagede tider:", err);
+    }
   };
 
   if (currentUser?.rolle === "frisor") {
@@ -262,6 +103,46 @@ const BookingPage = () => {
       </div>
     );
   }
+
+  const handleBooking = async (e) => {
+    e.preventDefault();
+    if (!selectedTime) return;
+    setIsSubmitting(true);
+    try {
+      await axios.post(`${API_URL}/api/Booking/create`, {
+        frisorId: parseInt(selectedFrisor),
+        behandlingId: parseInt(selectedBehandling),
+        startTid: selectedTime.startStr,
+        kundeId: currentUser?.kundeId || null,
+        email: currentUser?.email || guestEmail,
+        navn: currentUser?.navn || "Gæst",
+        telefon: currentUser?.telefon || "00000000"
+      });
+      await fetchOccupiedSlots(selectedFrisor);
+      setSelectedTime(null);
+      setIsSuccess(true);
+    } catch (err) {
+      const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
+      alert(msg);
+      if (String(msg).toLowerCase().includes("optaget")) {
+        try {
+          await fetchOccupiedSlots(selectedFrisor);
+          setSelectedTime(null);
+        } catch (e2) {
+          console.error("Kunne ikke opdatere optagede tider:", e2);
+        }
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ✅ FIXET: Logger ud én gang
+  const handleLogout = () => { 
+    sessionStorage.clear(); 
+    setCurrentUser(null); 
+    window.location.href = "/";
+  };
 
   if (isSuccess) {
     return (
@@ -279,140 +160,56 @@ const BookingPage = () => {
     );
   }
 
+  const today = new Date().toISOString().split('T')[0];
+
+  const isTuesday = (date) => date.getDay() === 2;
+
   return (
     <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
       <style>{`
-        /* CLEAN SLOTS */
         .fc-timegrid-slot { background-image: none !important; background-color: transparent !important; }
-        .fc-non-business { display: none !important; }
-        .fc-bg-event { display: none !important; }
-
-        /* LEDIG i HVER aaben dag-kolonne via col-frame SVG */
-        .fc .fc-timegrid-col.fc-day .fc-timegrid-col-frame {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2363b3ed' fill-opacity='0.35' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E");
-          background-repeat: repeat-y;
-          background-position: center top;
+        .fc-non-business, .fc-bg-event { display: none !important; }
+        .fc-timegrid-col-frame {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='28' font-family='Arial' font-weight='800' font-size='7' fill='%2363b3ed' fill-opacity='0.25' text-anchor='middle' letter-spacing='1.5'%3ELEDIG%3C/text%3E%3C/svg%3E") !important;
+          background-repeat: repeat-y !important;
+          background-position: center top !important;
         }
-        .fc .fc-day-today .fc-timegrid-col-frame {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2360a5fa' fill-opacity='0.45' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E");
-        }
-
-        /* EVENTS — skal ligge OVER LEDIG baggrunden */
-        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; z-index: 10 !important; }
-        .fc-timegrid-col-events { overflow: visible !important; margin: 0 2px !important; z-index: 10 !important; position: relative !important; }
-        .fc-event {
-          max-width: 100% !important;
-          overflow: hidden !important;
-          box-sizing: border-box !important;
-          border-radius: 8px !important;
-          padding: 4px 8px !important;
-          font-size: 10px !important;
-          font-weight: 800 !important;
-          opacity: 1 !important;
-          z-index: 10 !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          text-align: center !important;
-          letter-spacing: 0.05em !important;
-          text-transform: uppercase !important;
-        }
-        .fc-event .fc-event-main { color: #fff !important; width: 100% !important; }
-        .fc-event .fc-event-time { display: none !important; }
-
-        /* BASE */
+        .fc-day-tue .fc-timegrid-col-frame, .fc-day-disabled .fc-timegrid-col-frame { background-image: none !important; }
+        .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; }
+        .fc-timegrid-col-events { overflow: hidden !important; margin: 0 2px !important; }
+        .fc-event { max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; border-radius: 8px !important; padding: 4px 8px !important; font-size: 10px !important; font-weight: 700 !important; }
         .fc { font-family: 'Segoe UI', Arial, sans-serif !important; }
         .fc .fc-view-harness { background: transparent !important; }
         .fc .fc-toolbar { padding: 0 0 20px 0; }
         .fc .fc-toolbar-title { font-size: 13px !important; font-weight: 600 !important; color: rgba(232,237,245,0.6) !important; }
-
-        /* KNAPPER */
         .fc .fc-button { background: rgba(24,95,165,0.2) !important; border: 1px solid rgba(55,138,221,0.2) !important; border-radius: 10px !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; padding: 7px 14px !important; color: rgba(133,183,235,0.7) !important; box-shadow: none !important; transition: all 0.2s !important; }
-        .fc .fc-button:hover { background: rgba(24,95,165,0.4) !important; box-shadow: none !important; }
-        .fc .fc-button:focus { box-shadow: none !important; outline: none !important; }
-        .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: rgba(24,95,165,0.55) !important; box-shadow: none !important; }
-
-        /* GRID */
+        .fc .fc-button:hover { background: rgba(24,95,165,0.4) !important; }
+        .fc .fc-button-active { background: rgba(24,95,165,0.55) !important; }
         .fc .fc-scrollgrid { border: 1px solid rgba(55,138,221,0.1) !important; border-radius: 16px !important; overflow: hidden !important; }
         .fc td, .fc th { border-color: rgba(55,138,221,0.07) !important; }
-        .fc .fc-scrollgrid-section > td { border: none !important; }
-
-        /* HEADER */
         .fc .fc-col-header { background: rgba(8,12,20,0.9) !important; }
-        .fc .fc-col-header-cell { padding: 12px 0 !important; border-bottom: 1px solid rgba(55,138,221,0.1) !important; }
-        .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: rgba(232,237,245,0.3) !important; text-decoration: none !important; }
-        .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #60a5fa !important; }
-
-        /* SLOTS */
+        .fc .fc-col-header-cell { padding: 12px 0 !important; }
+        .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; color: rgba(232,237,245,0.3) !important; text-decoration: none !important; }
+        .fc .fc-day-today .fc-col-header-cell-cushion { color: #60a5fa !important; }
+        .fc-day-tue .fc-col-header-cell-cushion { color: rgba(220,38,38,0.4) !important; }
         .fc .fc-timegrid-slot { height: 52px !important; border-color: rgba(55,138,221,0.05) !important; }
-        .fc .fc-timegrid-slot-minor { border-color: rgba(55,138,221,0.02) !important; }
-        .fc .fc-timegrid-slot-label { border: none !important; }
-        .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 600 !important; padding-right: 10px !important; }
-        .fc .fc-timegrid-axis { background: rgba(8,12,20,0.7) !important; border-right: 1px solid rgba(55,138,221,0.07) !important; }
-
-        /* HOVER paa ledige tider — reaktiv pop-effekt */
-        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane {
-          transition: all 0.15s ease !important;
-        }
-        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane:hover {
-          background: rgba(55,138,221,0.18) !important;
-          cursor: pointer !important;
-          box-shadow: inset 0 0 0 2px rgba(96,165,250,0.6), inset 0 0 16px rgba(59,130,246,0.25) !important;
-        }
-        /* Selve celle-kolonnen reagerer ogsaa */
-        .fc .fc-timegrid-col.fc-day:hover .fc-timegrid-col-frame {
-          background-color: rgba(55,138,221,0.02) !important;
-        }
-
-        /* I DAG */
+        .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; }
         .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
         .fc .fc-timegrid-now-indicator-line { border-color: #60a5fa !important; border-width: 2px !important; }
-        .fc .fc-timegrid-now-indicator-arrow { border-top-color: #60a5fa !important; border-bottom-color: #60a5fa !important; }
-
-        /* SELECTION HIGHLIGHT — kun den klikkede celle */
-        .fc-highlight {
-          background: rgba(29,78,216,0.4) !important;
-          border: 2px solid #3b82f6 !important;
-          border-radius: 8px !important;
-          box-shadow: 0 0 20px rgba(59,130,246,0.6) !important;
-        }
-        .fc-timegrid-now-indicator-container { z-index: 5; }
-
-        /* VALGT TID EVENT — ligger OVER LEDIG */
-        .selected-event {
-          z-index: 50 !important;
-          background: #1d4ed8 !important;
-          border: 2px solid #60a5fa !important;
-          box-shadow: 0 0 0 2px #60a5fa, 0 4px 20px rgba(29,78,216,0.6) !important;
-          animation: pulse-blue 2s ease-in-out infinite !important;
-        }
-        .selected-event .fc-event-main {
-          color: #fff !important;
-          font-weight: 800 !important;
-          font-size: 9px !important;
-          letter-spacing: 0.08em !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          text-align: center !important;
-        }
-        @keyframes pulse-blue {
-          0%, 100% { box-shadow: 0 0 0 2px #60a5fa, 0 4px 16px rgba(29,78,216,0.5); }
-          50% { box-shadow: 0 0 0 4px rgba(96,165,250,0.5), 0 4px 28px rgba(29,78,216,0.7); }
-        }
-
-        /* SCROLLBAR */
-        .fc-scroller::-webkit-scrollbar { width: 3px; }
-        .fc-scroller::-webkit-scrollbar-thumb { background: rgba(55,138,221,0.15); border-radius: 4px; }
-
+        .fc-highlight { background: rgba(29,78,216,0.45) !important; border: 3px solid #3b82f6 !important; border-radius: 6px !important; box-shadow: 0 0 25px rgba(59,130,246,0.7) !important; animation: highlight-pulse 1.5s ease-in-out infinite !important; display: block !important; z-index: 5 !important; }
+        @keyframes highlight-pulse { 0%,100%{ box-shadow: 0 0 20px rgba(59,130,246,0.5); } 50%{ box-shadow: 0 0 35px rgba(59,130,246,0.9); } }
+        .selected-event { box-shadow: 0 0 0 3px #60a5fa, 0 4px 25px rgba(29,78,216,0.6) !important; animation: pulse-blue 2s ease-in-out infinite !important; }
+        @keyframes pulse-blue { 0%,100%{ box-shadow: 0 0 0 3px #60a5fa; } 50%{ box-shadow: 0 0 0 6px rgba(96,165,250,0.5); } }
+        .fc-day-tue { background: rgba(220,38,38,0.05) !important; opacity: 0.4 !important; cursor: not-allowed !important; pointer-events: none !important; }
+        .fc-day-disabled { background: rgba(0,0,0,0.3) !important; opacity: 0.2 !important; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
         .select-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.15); color: #e8edf5; padding: 14px 18px; border-radius: 14px; font-size: 13px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; transition: border 0.2s; }
         .select-field:focus { border-color: rgba(55,138,221,0.45); }
         .select-field option { background: #0f1623; color: #e8edf5; }
       `}</style>
 
+      {/* NAVBAR */}
       <nav style={{ background: "rgba(8,12,20,0.95)", borderBottom: "1px solid rgba(55,138,221,0.1)", padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
         <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>SuperKlip</Link>
         <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
@@ -430,6 +227,7 @@ const BookingPage = () => {
         </div>
       </nav>
 
+      {/* LOADING */}
       {dataLoading && (
         <div style={{ maxWidth: 600, margin: "80px auto", padding: "0 40px", textAlign: "center" }}>
           <div style={{ background: "rgba(24,95,165,0.07)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 20, padding: "48px 32px" }}>
@@ -471,39 +269,32 @@ const BookingPage = () => {
                     <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(232,237,245,0.6)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Klik på en ledig tid</span>
                   </div>
                   <div style={{ display: "flex", gap: 14, fontSize: 10, color: "rgba(232,237,245,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(99,179,237,0.4)", display: "inline-block" }} />Ledig</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#4b5563", display: "inline-block" }} />Optaget</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#dc2626", display: "inline-block" }} />Skole</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#1d4ed8", display: "inline-block" }} />Din valgte</span>
                   </div>
                 </div>
-
                 <FullCalendar
                   plugins={[timeGridPlugin, interactionPlugin]}
-                  locale={daLocale}
                   initialView="timeGridWeek"
                   allDaySlot={false}
-                  slotDuration="00:30:00"
-                  snapDuration="00:30:00"
                   slotMinTime="10:00:00"
                   slotMaxTime="18:30:00"
                   height="620px"
                   expandRows={true}
                   selectable={true}
-                  selectMirror={true}
                   selectOverlap={false}
-                  unselectAuto={false}
+                  selectMirror={true}
                   events={allEvents}
-                  dateClick={handleDateClick}
-                  select={handleSelect}
-                  selectAllow={(info) => canPick(info.start, info.end)}
-                  eventOverlap={false}
+                  select={(info) => setSelectedTime(info)}
+                  selectAllow={(selectInfo) => !isTuesday(selectInfo.start)}
+                  locale="da"
                   nowIndicator={true}
-                  validRange={{ start: todayStr, end: maxDateStr }}
-                  hiddenDays={[2]}
+                  validRange={{ start: today }}
                   headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridDay,timeGridWeek' }}
                   slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
                   dayHeaderFormat={{ weekday: 'short', day: 'numeric', month: 'numeric' }}
+                  dayCellClassNames={(arg) => isTuesday(arg.date) ? ['fc-day-tue'] : []}
                 />
               </div>
             )}
@@ -520,7 +311,6 @@ const BookingPage = () => {
               pointerEvents: selectedTime ? "all" : "none"
             }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, color: "#e8edf5", marginBottom: 20 }}>Gennemfør booking</h2>
-
               {selectedTime && (
                 <form onSubmit={handleBooking} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div style={{ background: "rgba(29,78,216,0.12)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 12, padding: "14px 16px" }}>
@@ -535,15 +325,12 @@ const BookingPage = () => {
                       {new Date(selectedTime.endStr).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-
                   {!currentUser ? (
                     <div>
                       <p style={{ fontSize: 10, color: "rgba(55,138,221,0.55)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>Din email</p>
                       <div style={{ position: "relative" }}>
                         <Mail size={12} color="rgba(232,237,245,0.15)" style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }} />
-                        <input required type="email" placeholder="din@email.dk"
-                          style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(55,138,221,0.15)", color: "#e8edf5", padding: "11px 13px 11px 34px", borderRadius: 11, fontSize: 13, outline: "none", boxSizing: "border-box" }}
-                          onChange={e => setGuestEmail(e.target.value)} />
+                        <input required type="email" placeholder="din@email.dk" style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(55,138,221,0.15)", color: "#e8edf5", padding: "11px 13px 11px 34px", borderRadius: 11, fontSize: 13, outline: "none", boxSizing: "border-box" }} onChange={e => setGuestEmail(e.target.value)} />
                       </div>
                     </div>
                   ) : (
@@ -553,9 +340,7 @@ const BookingPage = () => {
                       <p style={{ fontSize: 11, color: "rgba(232,237,245,0.3)" }}>{currentUser.email}</p>
                     </div>
                   )}
-
-                  <button type="submit" disabled={isSubmitting}
-                    style={{ width: "100%", background: "linear-gradient(135deg, #1d4ed8, #2563eb)", color: "#e6f1fb", padding: "15px", borderRadius: 12, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.75 : 1, boxShadow: "0 4px 20px rgba(29,78,216,0.35)" }}>
+                  <button type="submit" disabled={isSubmitting} style={{ width: "100%", background: isSubmitting ? "rgba(55,138,221,0.3)" : "linear-gradient(135deg, #1d4ed8, #2563eb)", color: "#e6f1fb", padding: "15px", borderRadius: 12, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: isSubmitting ? "not-allowed" : "pointer", boxShadow: "0 4px 20px rgba(29,78,216,0.35)" }}>
                     {isSubmitting ? "Behandler..." : "Bestil tid nu"}
                   </button>
                 </form>
