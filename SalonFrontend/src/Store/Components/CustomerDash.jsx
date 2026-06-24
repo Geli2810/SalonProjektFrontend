@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from "../../SYSAdmin";
 import { User, LogOut, Scissors, Clock, Mail, Phone, RefreshCw, Save, X, AlertCircle, Trash2, Edit3, XCircle } from 'lucide-react';
 import StarRating from './StarRating';
+import RatingPopup from './RatingPopup';
+
 
 
 export default function CustomerDash() {
@@ -22,6 +24,8 @@ export default function CustomerDash() {
   const [cancelBookingId, setCancelBookingId] = useState(null);
 
   const API_URL = "https://salonproject.onrender.com";
+
+  const [showRatingPopup, setShowRatingPopup] = useState(true);
 
   const [formData, setFormData] = useState({
     navn: '',
@@ -526,6 +530,11 @@ const BookingCard = ({ b, faded, showCancel }) => {
                 )}
               </>
             )}
+            {/* RATING POPUP */}
+<RatingPopup 
+  kundeId={user?.kundeId} 
+  onClose={() => setShowRatingPopup(false)} 
+/>
           </div>
         </div>
       </div>
