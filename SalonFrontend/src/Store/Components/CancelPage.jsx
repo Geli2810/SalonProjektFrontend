@@ -5,8 +5,8 @@ import { Loader } from 'lucide-react';
 
 export default function CancelPage() {
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email');
-  const token = searchParams.get('token');
+  const email = searchParams.get('email') || sessionStorage.getItem('cancelEmail');
+  const token = searchParams.get('token') || sessionStorage.getItem('cancelToken');
   
   const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
@@ -18,9 +18,12 @@ export default function CancelPage() {
 
   useEffect(() => {
     if (!email) { setError('Ingen email angivet'); setLoading(false); return; }
+    
     axios.get(`${API_URL}/api/Booking/by-email/${encodeURIComponent(email)}`)
       .then(res => {
-        setBookings(res.data.filter(b => new Date(b.startTid) > new Date() && b.status !== 'aflyst'));
+        setBookings(res.data.filter(b => 
+          new Date(b.startTid) > new Date() && b.status !== 'aflyst'
+        ));
         setLoading(false);
       })
       .catch(() => { setError('Kunne ikke finde bookinger'); setLoading(false); });
@@ -29,9 +32,11 @@ export default function CancelPage() {
   const handleCancel = async (bookingId) => {
     setCancelling(bookingId);
     try {
-      await axios.put(`${API_URL}/api/Booking/cancel-by-link/${bookingId}?token=${token}`);
+      await axios.put(`${API_URL}/api/Booking/cancel-by-link/${bookingId}?token=${encodeURIComponent(token)}`);
       setResult({ success: true, message: 'Tiden er aflyst! ✓' });
       setBookings(prev => prev.filter(b => b.bookingId !== bookingId));
+      sessionStorage.removeItem('cancelEmail');
+      sessionStorage.removeItem('cancelToken');
     } catch (err) {
       setResult({ success: false, message: err.response?.data?.message || 'Kunne ikke aflyse' });
     } finally { setCancelling(null); }
