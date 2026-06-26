@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { getCurrentUser } from "../../SYSAdmin";
 import { LogOut, Menu, X as XIcon } from "lucide-react";
 import axios from "axios";
-import CancelPage from './CancelPage';
 
 export default function LandingPage({ currentUser, onLogout }) {
   const [user, setUser] = useState(currentUser || null);
@@ -14,31 +13,19 @@ export default function LandingPage({ currentUser, onLogout }) {
   const [ratingData, setRatingData] = useState({ average: 0, count: 0, distribution: null });
 
   useEffect(() => { setUser(currentUser || getCurrentUser()); }, [currentUser]);
-  
+
   useEffect(() => {
     setTimeout(() => setVisible(true), 100);
     const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-  
+
   useEffect(() => {
     axios.get('https://salonproject.onrender.com/api/Rating/average')
       .then(res => setRatingData(res.data))
       .catch(() => {});
   }, []);
-
-  // ✅ VIS CancelPage hvis URL har email + token
-  const urlParams = new URLSearchParams(window.location.search);
-  const emailParam = urlParams.get('email');
-  const tokenParam = urlParams.get('token');
-  
-  if (emailParam && tokenParam) {
-    sessionStorage.setItem('cancelEmail', emailParam);
-    sessionStorage.setItem('cancelToken', tokenParam);
-    window.history.replaceState({}, '', '/');
-    return <CancelPage />;
-  }
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -48,7 +35,7 @@ export default function LandingPage({ currentUser, onLogout }) {
   };
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh", overflowX: "hidden" }}>
+    <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "transparent", color: "#e8edf5", minHeight: "100vh", overflowX: "hidden" }}>
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <div style={{ position: "absolute", width: "clamp(300px, 50vw, 600px)", height: "clamp(300px, 50vw, 600px)", borderRadius: "50%", background: "radial-gradient(circle, rgba(24,95,165,0.18) 0%, transparent 70%)", top: "-100px", left: "-100px", animation: "blob1 8s ease-in-out infinite" }} />
         <div style={{ position: "absolute", width: "clamp(250px, 40vw, 500px)", height: "clamp(250px, 40vw, 500px)", borderRadius: "50%", background: "radial-gradient(circle, rgba(13,110,86,0.12) 0%, transparent 70%)", bottom: "100px", right: "-80px", animation: "blob2 10s ease-in-out infinite" }} />
