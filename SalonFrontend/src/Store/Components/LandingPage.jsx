@@ -28,25 +28,23 @@ export default function LandingPage({ currentUser, onLogout }) {
       .catch(() => {});
   }, []);
 
-  // ✅ OMDIRIGER cancel links til CancelPage
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const email = params.get('email');
-    const token = params.get('token');
-    
-    if (email && token && window.location.pathname === '/cancel') {
-      sessionStorage.setItem('cancelEmail', email);
-      sessionStorage.setItem('cancelToken', token);
-      window.location.href = '/?cancel=1';
-    }
-  }, []);
-
-  // ✅ VIS CancelPage hvis cancel parametre findes
+  // ✅ VIS CancelPage hvis URL har email + token parametre
   const urlParams = new URLSearchParams(window.location.search);
+  const emailParam = urlParams.get('email');
+  const tokenParam = urlParams.get('token');
   const isCancel = urlParams.get('cancel') === '1';
   const storedEmail = sessionStorage.getItem('cancelEmail');
   const storedToken = sessionStorage.getItem('cancelToken');
   
+  // FØRSTE gang - linket har email og token
+  if (emailParam && tokenParam) {
+    sessionStorage.setItem('cancelEmail', emailParam);
+    sessionStorage.setItem('cancelToken', tokenParam);
+    window.history.replaceState({}, '', '/cancel');
+    return <CancelPage />;
+  }
+  
+  // ANDEN gang - efter redirect
   if (isCancel && storedEmail && storedToken) {
     window.history.replaceState({}, '', '/');
     return <CancelPage />;
