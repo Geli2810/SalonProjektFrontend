@@ -14,21 +14,41 @@ export default function LandingPage({ currentUser, onLogout }) {
   const [ratingData, setRatingData] = useState({ average: 0, count: 0, distribution: null });
 
   useEffect(() => { setUser(currentUser || getCurrentUser()); }, [currentUser]);
+  
   useEffect(() => {
     setTimeout(() => setVisible(true), 100);
     const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+  
   useEffect(() => {
     axios.get('https://salonproject.onrender.com/api/Rating/average')
       .then(res => setRatingData(res.data))
       .catch(() => {});
   }, []);
 
-  // ✅ TJEK OM DET ER ET AFLYSNINGSLINK
+  // ✅ OMDIRIGER cancel links til CancelPage
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email');
+    const token = params.get('token');
+    
+    if (email && token && window.location.pathname === '/cancel') {
+      sessionStorage.setItem('cancelEmail', email);
+      sessionStorage.setItem('cancelToken', token);
+      window.location.href = '/?cancel=1';
+    }
+  }, []);
+
+  // ✅ VIS CancelPage hvis cancel parametre findes
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('email') && urlParams.get('token')) {
+  const isCancel = urlParams.get('cancel') === '1';
+  const storedEmail = sessionStorage.getItem('cancelEmail');
+  const storedToken = sessionStorage.getItem('cancelToken');
+  
+  if (isCancel && storedEmail && storedToken) {
+    window.history.replaceState({}, '', '/');
     return <CancelPage />;
   }
 
