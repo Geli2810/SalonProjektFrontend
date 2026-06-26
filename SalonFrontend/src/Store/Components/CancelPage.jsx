@@ -61,10 +61,10 @@ export default function CancelPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080c14", color: "#e8edf5", fontFamily: "'Segoe UI', Arial, sans-serif", padding: "40px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100vh", background: "#080c14", color: "#e8edf5", fontFamily: "'Segoe UI', Arial, sans-serif", padding: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       <div style={{ maxWidth: 500, width: "100%" }}>
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 20, padding: "40px 32px", textAlign: "center" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 20, padding: "32px 24px", textAlign: "center" }}>
           <h1 style={{ fontSize: 24, fontWeight: 300, marginBottom: 8 }}>Aflys din tid</h1>
           <p style={{ fontSize: 12, color: "rgba(232,237,245,0.4)", marginBottom: 24 }}>{email}</p>
 

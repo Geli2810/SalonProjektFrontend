@@ -10,6 +10,8 @@ import AdminPanel from "./Store/Components/AdminPanel";
 import { getCurrentUser } from './SYSAdmin';
 import SalonBackground from "./Store/Components/SalonBackground";
 import StarRating from "./Store/Components/StarRating";
+import CancelPage from './Store/Components/CancelPage';
+
 
 function App() {
   const [currentUser, setCurrentUser] = useState(getCurrentUser());
@@ -110,6 +112,8 @@ function App() {
                 <Navigate to="/frisor-login" />
             } 
           />
+          <Route path="/cancel" element={<CancelPage />} />
+
           
           {/* 404 */}
           <Route 

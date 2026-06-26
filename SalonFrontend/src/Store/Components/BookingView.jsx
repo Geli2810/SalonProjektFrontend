@@ -37,7 +37,6 @@ const BookingPage = () => {
   maxDate.setDate(maxDate.getDate() + 7);
   const maxDateStr = localDateStr(maxDate);
 
-  // Fjern evt. Z (UTC-markør) saa FullCalendar laeser tiden som lokal tid
   const stripZ = (t) => {
     if (!t) return t;
     let s = String(t);
@@ -78,13 +77,10 @@ const BookingPage = () => {
     }] : [])
   ];
 
-  useEffect(() => {
-    setCurrentUser(getCurrentUser());
-  }, []);
+  useEffect(() => { setCurrentUser(getCurrentUser()); }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
-
     Promise.all([
       axios.get(`${API_URL}/api/HairDresserSalon/frisorer`),
       axios.get(`${API_URL}/api/HairDresserSalon/behandlinger`)
@@ -94,39 +90,20 @@ const BookingPage = () => {
         setBehandlinger(bRes.data);
       })
       .catch(console.error)
-      .finally(() => {
-        setDataLoading(false);
-        clearInterval(timer);
-      });
-
+      .finally(() => { setDataLoading(false); clearInterval(timer); });
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    if (!selectedFrisor) {
-      setOccupiedSlots([]);
-      setSelectedTime(null);
-      return;
-    }
-
+    if (!selectedFrisor) { setOccupiedSlots([]); setSelectedTime(null); return; }
     let isMounted = true;
-
     const run = async () => {
-      try {
-        if (!isMounted) return;
-        await fetchOccupiedSlots(selectedFrisor);
-      } catch (e) {
-        console.error("Kunne ikke hente occupied slots:", e);
-      }
+      try { if (!isMounted) return; await fetchOccupiedSlots(selectedFrisor); }
+      catch (e) { console.error("Kunne ikke hente occupied slots:", e); }
     };
-
     run();
     const intervalId = setInterval(run, 10000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(intervalId);
-    };
+    return () => { isMounted = false; clearInterval(intervalId); };
   }, [selectedFrisor]);
 
   const isTuesday = (date) => date.getDay() === 2;
@@ -137,21 +114,16 @@ const BookingPage = () => {
   };
 
   const isInAllowedRange = (date) => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const start = new Date(todayStr);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(maxDateStr);
-    end.setHours(23, 59, 59, 999);
+    const d = new Date(date); d.setHours(0,0,0,0);
+    const start = new Date(todayStr); start.setHours(0,0,0,0);
+    const end = new Date(maxDateStr); end.setHours(23,59,59,999);
     return d >= start && d <= end;
   };
 
   const hasOverlapWithOccupied = (start, end) => {
-    const s = start.getTime();
-    const e = end.getTime();
+    const s = start.getTime(), e = end.getTime();
     return occupiedSlots.some((ev) => {
-      const es = new Date(ev.start).getTime();
-      const ee = new Date(ev.end).getTime();
+      const es = new Date(ev.start).getTime(), ee = new Date(ev.end).getTime();
       return s < ee && e > es;
     });
   };
@@ -166,7 +138,6 @@ const BookingPage = () => {
     return true;
   };
 
-  // Formatér til lokal tid UDEN tidszone-konvertering (undgaar UTC-forskydning)
   const toLocalISO = (date) => {
     const d = new Date(date);
     const y = d.getFullYear();
@@ -182,71 +153,45 @@ const BookingPage = () => {
     const start = new Date(info.date);
     const end = new Date(start.getTime() + 30 * 60 * 1000);
     if (!canPick(start, end)) return;
-    setSelectedTime({
-      start, end,
-      startStr: toLocalISO(start),
-      endStr: toLocalISO(end)
-    });
+    setSelectedTime({ start, end, startStr: toLocalISO(start), endStr: toLocalISO(end) });
   };
 
   const handleSelect = (info) => {
     if (!canPick(info.start, info.end)) return;
-    setSelectedTime({
-      start: info.start,
-      end: info.end,
-      startStr: toLocalISO(info.start),
-      endStr: toLocalISO(info.end)
-    });
+    setSelectedTime({ start: info.start, end: info.end, startStr: toLocalISO(info.start), endStr: toLocalISO(info.end) });
   };
 
   const handleBooking = async (e) => {
-      e.preventDefault();
-      if (!selectedTime) return;
-      
-      setIsSubmitting(true);
-      
-      try {
-        await axios.post(`${API_URL}/api/Booking/create`, {
-          frisorId: parseInt(selectedFrisor),
-          behandlingId: parseInt(selectedBehandling),
-          startTid: selectedTime.startStr,
-          kundeId: currentUser?.kundeId || null,        // null for gæster
-          email: currentUser?.email || guestEmail,       // gæsters email
-          navn: currentUser?.navn || "Gæst",             // "Gæst" hvis ikke logget ind
-          telefon: currentUser?.telefon || "00000000"
-        });
-        
-        // Opdater slots og reset valgt tid
-        await fetchOccupiedSlots(selectedFrisor);
-        setSelectedTime(null);
-        setIsSuccess(true);
-        
-        // 🚫 GEM IKKE GÆST I SESSION STORAGE!
-        // Kun Login/Register komponenterne sætter sessionStorage!
-        
-      } catch (err) {
-        const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
-        alert(msg);
-        
-        // Hvis tiden er optaget, opdater slots automatisk
-        if (String(msg).toLowerCase().includes("optaget")) {
-          try {
-            await fetchOccupiedSlots(selectedFrisor);
-            setSelectedTime(null);
-          } catch (e2) {
-            console.error("Kunne ikke opdatere optagede tider:", e2);
-          }
-        }
-      } finally {
-        setIsSubmitting(false);
+    e.preventDefault();
+    if (!selectedTime) return;
+    setIsSubmitting(true);
+    try {
+      await axios.post(`${API_URL}/api/Booking/create`, {
+        frisorId: parseInt(selectedFrisor),
+        behandlingId: parseInt(selectedBehandling),
+        startTid: selectedTime.startStr,
+        kundeId: currentUser?.kundeId || null,
+        email: currentUser?.email || guestEmail,
+        navn: currentUser?.navn || "Gæst",
+        telefon: currentUser?.telefon || "00000000"
+      });
+      await fetchOccupiedSlots(selectedFrisor);
+      setSelectedTime(null);
+      setIsSuccess(true);
+    } catch (err) {
+      const msg = err.response?.data?.message || "Kunne ikke bestille tid.";
+      alert(msg);
+      if (String(msg).toLowerCase().includes("optaget")) {
+        try { await fetchOccupiedSlots(selectedFrisor); setSelectedTime(null); }
+        catch (e2) { console.error(e2); }
       }
+    } finally { setIsSubmitting(false); }
   };
-
 
   const handleLogout = () => {
     sessionStorage.clear();
     setCurrentUser(null);
-    navigate("/");
+    window.location.href = "/";
   };
 
   if (currentUser?.rolle === "frisor") {
@@ -255,9 +200,7 @@ const BookingPage = () => {
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(55,138,221,0.2)", borderRadius: 24, padding: "48px", textAlign: "center", maxWidth: 400 }}>
           <Scissors size={32} color="#378add" style={{ margin: "0 auto 20px", display: "block" }} />
           <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Kun kunder kan booke tider</h1>
-          <Link to="/admin" style={{ background: "rgba(24,95,165,0.4)", border: "1px solid rgba(55,138,221,0.4)", color: "#85b7eb", padding: "12px 28px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 20, display: "inline-block" }}>
-            Gå til frisørpanel
-          </Link>
+          <Link to="/admin" style={{ background: "rgba(24,95,165,0.4)", border: "1px solid rgba(55,138,221,0.4)", color: "#85b7eb", padding: "12px 28px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 20, display: "inline-block" }}>Gå til frisørpanel</Link>
         </div>
       </div>
     );
@@ -269,7 +212,7 @@ const BookingPage = () => {
         <div style={{ background: "rgba(15,110,86,0.1)", border: "1px solid rgba(93,202,165,0.2)", borderRadius: 28, padding: "64px 48px", textAlign: "center", maxWidth: 480 }}>
           <CheckCircle size={48} color="#5dcaa5" style={{ margin: "0 auto 24px", display: "block" }} />
           <h1 style={{ fontSize: 32, fontWeight: 300, marginBottom: 12 }}>Tiden er din!</h1>
-          <p style={{ color: "rgba(232,237,245,0.45)", fontSize: 14, marginBottom: 40, lineHeight: 1.7 }}>Vi har sendt en bekræftelse til din mail.</p>
+          <p style={{ color: "rgba(232,237,245,0.45)", fontSize: 14, marginBottom: 40 }}>Vi har sendt en bekræftelse til din mail.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Link to="/" style={{ background: "#185fa5", color: "#e6f1fb", padding: "16px 32px", borderRadius: 50, textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Gå til forsiden</Link>
             {currentUser && <Link to="/dashboard" style={{ color: "rgba(232,237,245,0.35)", fontSize: 11, textDecoration: "none" }}>Se mine aftaler</Link>}
@@ -282,135 +225,54 @@ const BookingPage = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: "#080c14", color: "#e8edf5", minHeight: "100vh" }}>
       <style>{`
-        /* CLEAN SLOTS */
         .fc-timegrid-slot { background-image: none !important; background-color: transparent !important; }
         .fc-non-business { display: none !important; }
         .fc-bg-event { display: none !important; }
-
-        /* LEDIG i HVER aaben dag-kolonne via col-frame SVG */
         .fc .fc-timegrid-col.fc-day .fc-timegrid-col-frame {
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2363b3ed' fill-opacity='0.35' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E");
-          background-repeat: repeat-y;
-          background-position: center top;
+          background-repeat: repeat-y; background-position: center top;
         }
         .fc .fc-day-today .fc-timegrid-col-frame {
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='52'%3E%3Ctext x='50' y='26' font-family='Arial' font-weight='800' font-size='8' fill='%2360a5fa' fill-opacity='0.45' text-anchor='middle' dominant-baseline='middle' letter-spacing='2'%3ELEDIG%3C/text%3E%3C/svg%3E");
         }
-
-        /* EVENTS — skal ligge OVER LEDIG baggrunden */
         .fc-timegrid-event-harness { overflow: hidden !important; max-width: 100% !important; z-index: 10 !important; }
         .fc-timegrid-col-events { overflow: visible !important; margin: 0 2px !important; z-index: 10 !important; position: relative !important; }
-        .fc-event {
-          max-width: 100% !important;
-          overflow: hidden !important;
-          box-sizing: border-box !important;
-          border-radius: 8px !important;
-          padding: 4px 8px !important;
-          font-size: 10px !important;
-          font-weight: 800 !important;
-          opacity: 1 !important;
-          z-index: 10 !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          text-align: center !important;
-          letter-spacing: 0.05em !important;
-          text-transform: uppercase !important;
-        }
+        .fc-event { max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; border-radius: 8px !important; padding: 4px 8px !important; font-size: 10px !important; font-weight: 800 !important; opacity: 1 !important; z-index: 10 !important; display: flex !important; align-items: center !important; justify-content: center !important; text-align: center !important; letter-spacing: 0.05em !important; text-transform: uppercase !important; }
         .fc-event .fc-event-main { color: #fff !important; width: 100% !important; }
         .fc-event .fc-event-time { display: none !important; }
-
-        /* BASE */
         .fc { font-family: 'Segoe UI', Arial, sans-serif !important; }
         .fc .fc-view-harness { background: transparent !important; }
         .fc .fc-toolbar { padding: 0 0 20px 0; }
         .fc .fc-toolbar-title { font-size: 13px !important; font-weight: 600 !important; color: rgba(232,237,245,0.6) !important; }
-
-        /* KNAPPER */
         .fc .fc-button { background: rgba(24,95,165,0.2) !important; border: 1px solid rgba(55,138,221,0.2) !important; border-radius: 10px !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; padding: 7px 14px !important; color: rgba(133,183,235,0.7) !important; box-shadow: none !important; transition: all 0.2s !important; }
-        .fc .fc-button:hover { background: rgba(24,95,165,0.4) !important; box-shadow: none !important; }
-        .fc .fc-button:focus { box-shadow: none !important; outline: none !important; }
-        .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: rgba(24,95,165,0.55) !important; box-shadow: none !important; }
-
-        /* GRID */
+        .fc .fc-button:hover { background: rgba(24,95,165,0.4) !important; }
+        .fc .fc-button-active, .fc .fc-button:not(:disabled):active { background: rgba(24,95,165,0.55) !important; }
         .fc .fc-scrollgrid { border: 1px solid rgba(55,138,221,0.1) !important; border-radius: 16px !important; overflow: hidden !important; }
         .fc td, .fc th { border-color: rgba(55,138,221,0.07) !important; }
         .fc .fc-scrollgrid-section > td { border: none !important; }
-
-        /* HEADER */
         .fc .fc-col-header { background: rgba(8,12,20,0.9) !important; }
         .fc .fc-col-header-cell { padding: 12px 0 !important; border-bottom: 1px solid rgba(55,138,221,0.1) !important; }
         .fc .fc-col-header-cell-cushion { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: rgba(232,237,245,0.3) !important; text-decoration: none !important; }
         .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #60a5fa !important; }
-
-        /* SLOTS */
         .fc .fc-timegrid-slot { height: 52px !important; border-color: rgba(55,138,221,0.05) !important; }
-        .fc .fc-timegrid-slot-minor { border-color: rgba(55,138,221,0.02) !important; }
-        .fc .fc-timegrid-slot-label { border: none !important; }
         .fc .fc-timegrid-slot-label-cushion { font-size: 10px !important; color: rgba(232,237,245,0.2) !important; font-weight: 600 !important; padding-right: 10px !important; }
         .fc .fc-timegrid-axis { background: rgba(8,12,20,0.7) !important; border-right: 1px solid rgba(55,138,221,0.07) !important; }
-
-        /* HOVER paa ledige tider — reaktiv pop-effekt */
-        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane {
-          transition: all 0.15s ease !important;
-        }
-        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane:hover {
-          background: rgba(55,138,221,0.18) !important;
-          cursor: pointer !important;
-          box-shadow: inset 0 0 0 2px rgba(96,165,250,0.6), inset 0 0 16px rgba(59,130,246,0.25) !important;
-        }
-        /* Selve celle-kolonnen reagerer ogsaa */
-        .fc .fc-timegrid-col.fc-day:hover .fc-timegrid-col-frame {
-          background-color: rgba(55,138,221,0.02) !important;
-        }
-
-        /* I DAG */
+        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane { transition: all 0.15s ease !important; }
+        .fc .fc-timegrid-col.fc-day .fc-timegrid-slot-lane:hover { background: rgba(55,138,221,0.18) !important; cursor: pointer !important; box-shadow: inset 0 0 0 2px rgba(96,165,250,0.6), inset 0 0 16px rgba(59,130,246,0.25) !important; }
         .fc .fc-day-today { background: rgba(55,138,221,0.03) !important; }
         .fc .fc-timegrid-now-indicator-line { border-color: #60a5fa !important; border-width: 2px !important; }
-        .fc .fc-timegrid-now-indicator-arrow { border-top-color: #60a5fa !important; border-bottom-color: #60a5fa !important; }
-
-        /* SELECTION HIGHLIGHT — kun den klikkede celle */
-        .fc-highlight {
-          background: rgba(29,78,216,0.4) !important;
-          border: 2px solid #3b82f6 !important;
-          border-radius: 8px !important;
-          box-shadow: 0 0 20px rgba(59,130,246,0.6) !important;
-        }
-        .fc-timegrid-now-indicator-container { z-index: 5; }
-
-        /* VALGT TID EVENT — ligger OVER LEDIG */
-        .selected-event {
-          z-index: 50 !important;
-          background: #1d4ed8 !important;
-          border: 2px solid #60a5fa !important;
-          box-shadow: 0 0 0 2px #60a5fa, 0 4px 20px rgba(29,78,216,0.6) !important;
-          animation: pulse-blue 2s ease-in-out infinite !important;
-        }
-        .selected-event .fc-event-main {
-          color: #fff !important;
-          font-weight: 800 !important;
-          font-size: 9px !important;
-          letter-spacing: 0.08em !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          text-align: center !important;
-        }
-        @keyframes pulse-blue {
-          0%, 100% { box-shadow: 0 0 0 2px #60a5fa, 0 4px 16px rgba(29,78,216,0.5); }
-          50% { box-shadow: 0 0 0 4px rgba(96,165,250,0.5), 0 4px 28px rgba(29,78,216,0.7); }
-        }
-
-        /* SCROLLBAR */
+        .fc-highlight { background: rgba(29,78,216,0.4) !important; border: 2px solid #3b82f6 !important; border-radius: 8px !important; box-shadow: 0 0 20px rgba(59,130,246,0.6) !important; }
+        .selected-event { z-index: 50 !important; background: #1d4ed8 !important; border: 2px solid #60a5fa !important; box-shadow: 0 0 0 2px #60a5fa, 0 4px 20px rgba(29,78,216,0.6) !important; animation: pulse-blue 2s ease-in-out infinite !important; }
+        @keyframes pulse-blue { 0%,100%{ box-shadow: 0 0 0 2px #60a5fa; } 50%{ box-shadow: 0 0 0 4px rgba(96,165,250,0.5); } }
         .fc-scroller::-webkit-scrollbar { width: 3px; }
         .fc-scroller::-webkit-scrollbar-thumb { background: rgba(55,138,221,0.15); border-radius: 4px; }
-
         @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
         .select-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.15); color: #e8edf5; padding: 14px 18px; border-radius: 14px; font-size: 13px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; transition: border 0.2s; }
         .select-field:focus { border-color: rgba(55,138,221,0.45); }
         .select-field option { background: #0f1623; color: #e8edf5; }
+        @media (max-width: 1024px) { .booking-layout { grid-template-columns: 1fr !important; } .booking-sidebar { position: static !important; top: auto !important; } }
+        @media (max-width: 640px) { nav { padding: 12px 16px !important; } .fc .fc-toolbar { flex-wrap: wrap !important; gap: 8px !important; } .fc .fc-toolbar-title { font-size: 11px !important; } .fc .fc-button { padding: 4px 8px !important; font-size: 9px !important; } .fc .fc-timegrid-slot { height: 40px !important; } .select-field { padding: 10px 14px !important; font-size: 12px !important; } }
       `}</style>
 
       <nav style={{ background: "rgba(8,12,20,0.95)", borderBottom: "1px solid rgba(55,138,221,0.1)", padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
@@ -435,7 +297,6 @@ const BookingPage = () => {
           <div style={{ background: "rgba(24,95,165,0.07)", border: "1px solid rgba(55,138,221,0.12)", borderRadius: 20, padding: "48px 32px" }}>
             <RefreshCw size={26} color="#378add" style={{ margin: "0 auto 16px", display: "block", animation: "spin 1s linear infinite" }} />
             <p style={{ fontSize: 15, color: "rgba(232,237,245,0.65)", marginBottom: 6 }}>Forbinder til serveren...</p>
-            <p style={{ fontSize: 12, color: "rgba(232,237,245,0.25)", marginBottom: 24 }}>Typisk 20-40 sekunder</p>
             <div style={{ background: "rgba(55,138,221,0.08)", borderRadius: 50, height: 3, overflow: "hidden", maxWidth: 280, margin: "0 auto" }}>
               <div style={{ height: "100%", background: "linear-gradient(90deg, #185fa5, #378add)", borderRadius: 50, width: `${Math.min((loadingSeconds / 45) * 100, 95)}%`, transition: "width 1s ease" }} />
             </div>
@@ -444,7 +305,7 @@ const BookingPage = () => {
       )}
 
       {!dataLoading && (
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 40px", display: "grid", gridTemplateColumns: "1fr 320px", gap: 24 }}>
+        <div className="booking-layout" style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 16px", display: "grid", gridTemplateColumns: "1fr 300px", gap: 20 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(55,138,221,0.1)", borderRadius: 18, padding: "24px 28px", animation: "fadeUp 0.5s ease forwards" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
@@ -509,7 +370,7 @@ const BookingPage = () => {
             )}
           </div>
 
-          <div style={{ position: "sticky", top: 80, height: "fit-content" }}>
+          <div className="booking-sidebar" style={{ position: "sticky", top: 80, height: "fit-content" }}>
             <div style={{
               background: selectedTime ? "rgba(24,95,165,0.08)" : "rgba(255,255,255,0.015)",
               border: `1px solid ${selectedTime ? "rgba(55,138,221,0.25)" : "rgba(55,138,221,0.07)"}`,
@@ -520,14 +381,11 @@ const BookingPage = () => {
               pointerEvents: selectedTime ? "all" : "none"
             }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, color: "#e8edf5", marginBottom: 20 }}>Gennemfør booking</h2>
-
               {selectedTime && (
                 <form onSubmit={handleBooking} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div style={{ background: "rgba(29,78,216,0.12)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 12, padding: "14px 16px" }}>
                     <p style={{ fontSize: 10, color: "rgba(96,165,250,0.6)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>Valgt tid</p>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "#e8edf5", lineHeight: 1.5 }}>
-                      {new Date(selectedTime.startStr).toLocaleString('da-DK', { weekday: 'long', day: 'numeric', month: 'short' })}
-                    </p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#e8edf5" }}>{new Date(selectedTime.startStr).toLocaleString('da-DK', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
                     <p style={{ fontSize: 12, color: "rgba(232,237,245,0.5)", marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
                       <Clock size={11} />
                       kl. {new Date(selectedTime.startStr).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
@@ -535,15 +393,12 @@ const BookingPage = () => {
                       {new Date(selectedTime.endStr).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-
                   {!currentUser ? (
                     <div>
                       <p style={{ fontSize: 10, color: "rgba(55,138,221,0.55)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>Din email</p>
                       <div style={{ position: "relative" }}>
                         <Mail size={12} color="rgba(232,237,245,0.15)" style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }} />
-                        <input required type="email" placeholder="din@email.dk"
-                          style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(55,138,221,0.15)", color: "#e8edf5", padding: "11px 13px 11px 34px", borderRadius: 11, fontSize: 13, outline: "none", boxSizing: "border-box" }}
-                          onChange={e => setGuestEmail(e.target.value)} />
+                        <input required type="email" placeholder="din@email.dk" style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(55,138,221,0.15)", color: "#e8edf5", padding: "11px 13px 11px 34px", borderRadius: 11, fontSize: 13, outline: "none", boxSizing: "border-box" }} onChange={e => setGuestEmail(e.target.value)} />
                       </div>
                     </div>
                   ) : (
@@ -553,9 +408,7 @@ const BookingPage = () => {
                       <p style={{ fontSize: 11, color: "rgba(232,237,245,0.3)" }}>{currentUser.email}</p>
                     </div>
                   )}
-
-                  <button type="submit" disabled={isSubmitting}
-                    style={{ width: "100%", background: "linear-gradient(135deg, #1d4ed8, #2563eb)", color: "#e6f1fb", padding: "15px", borderRadius: 12, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.75 : 1, boxShadow: "0 4px 20px rgba(29,78,216,0.35)" }}>
+                  <button type="submit" disabled={isSubmitting} style={{ width: "100%", background: "linear-gradient(135deg, #1d4ed8, #2563eb)", color: "#e6f1fb", padding: "15px", borderRadius: 12, border: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.75 : 1, boxShadow: "0 4px 20px rgba(29,78,216,0.35)" }}>
                     {isSubmitting ? "Behandler..." : "Bestil tid nu"}
                   </button>
                 </form>
