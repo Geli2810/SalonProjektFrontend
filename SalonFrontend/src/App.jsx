@@ -10,7 +10,7 @@ import AdminPanel from "./Store/Components/AdminPanel";
 import { getCurrentUser } from './SYSAdmin';
 import SalonBackground from "./Store/Components/SalonBackground";
 import StarRating from "./Store/Components/StarRating";
-import CancelPage from './Store/Components/CancelPage';
+import CancelPage from "./Store/Components/CancelPage";
 
 
 function App() {
