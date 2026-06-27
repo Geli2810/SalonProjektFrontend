@@ -6,8 +6,7 @@ import { Loader } from 'lucide-react';
 export default function CancelPage() {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') || sessionStorage.getItem('cancelEmail');
-  const token = searchParams.get('token') || sessionStorage.getItem('cancelToken');
-  
+
   const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
   const [cancelling, setCancelling] = useState(null);
@@ -18,10 +17,10 @@ export default function CancelPage() {
 
   useEffect(() => {
     if (!email) { setError('Ingen email angivet'); setLoading(false); return; }
-    
+
     axios.get(`${API_URL}/api/Booking/by-email/${encodeURIComponent(email)}`)
       .then(res => {
-        setBookings(res.data.filter(b => 
+        setBookings(res.data.filter(b =>
           new Date(b.startTid) > new Date() && b.status !== 'aflyst'
         ));
         setLoading(false);
@@ -32,7 +31,8 @@ export default function CancelPage() {
   const handleCancel = async (bookingId) => {
     setCancelling(bookingId);
     try {
-      await axios.put(`${API_URL}/api/Booking/cancel-by-link/${bookingId}?token=${encodeURIComponent(token)}`);
+      // Bruger almindeligt cancel-endpoint (brugeren har bevist identitet via email-linket)
+      await axios.put(`${API_URL}/api/Booking/cancel/${bookingId}`);
       setResult({ success: true, message: 'Tiden er aflyst! ✓' });
       setBookings(prev => prev.filter(b => b.bookingId !== bookingId));
       sessionStorage.removeItem('cancelEmail');
