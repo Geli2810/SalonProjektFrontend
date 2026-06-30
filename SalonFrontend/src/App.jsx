@@ -1,17 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import LandingPage from "./Store/Components/LandingPage";
-import Login from "./Store/Components/CustomerLogIn";
+import LoginPage from "./Store/Components/LoginPage";
 import Dashboard from "./Store/Components/CustomerDash";
 import BookingPage from "./Store/Components/BookingView";
-import FrisorLogin from "./Store/Components/FrisorLogin";
 import Register from "./Store/Components/Register";
 import AdminPanel from "./Store/Components/AdminPanel";
 import { getCurrentUser } from './SYSAdmin';
 import SalonBackground from "./Store/Components/SalonBackground";
-import StarRating from "./Store/Components/StarRating";
 import CancelPage from "./Store/Components/CancelPage";
-
 
 function App() {
   const [currentUser, setCurrentUser] = useState(getCurrentUser());
@@ -57,13 +54,13 @@ function App() {
             element={<LandingPage currentUser={currentUser} onLogout={handleLogout} />} 
           />
           
-          {/* LOGIN */}
+          {/* FÆLLES LOGIN (kunde + frisør) */}
           <Route 
             path="/login" 
             element={
               currentUser ? 
-                <Navigate to="/" /> : 
-                <Login onLoginSuccess={user => handleLoginSuccess(user, "kunde")} />
+                <Navigate to={currentUser.rolle === "frisor" ? "/admin" : "/"} /> : 
+                <LoginPage onLoginSuccess={handleLoginSuccess} />
             } 
           />
           
@@ -93,27 +90,18 @@ function App() {
             element={<BookingPage />} 
           />
           
-          {/* FRISØR LOGIN */}
-          <Route 
-            path="/frisor-login" 
-            element={
-              currentUser?.rolle === "frisor" ? 
-                <Navigate to="/admin" /> : 
-                <FrisorLogin onLoginSuccess={user => handleLoginSuccess(user, "frisor")} />
-            } 
-          />
-          
           {/* ADMIN PANEL - KUN for frisører */}
           <Route 
             path="/admin" 
             element={
               currentUser?.rolle === "frisor" ? 
                 <AdminPanel onLogout={handleLogout} /> : 
-                <Navigate to="/frisor-login" />
+                <Navigate to="/login" />
             } 
           />
-          <Route path="/cancel" element={<CancelPage />} />
 
+          {/* CANCEL PAGE */}
+          <Route path="/cancel" element={<CancelPage />} />
           
           {/* 404 */}
           <Route 

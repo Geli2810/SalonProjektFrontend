@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getCurrentUser } from "../../SYSAdmin";
 import { LogOut, Menu, X as XIcon } from "lucide-react";
 import axios from "axios";
+import CancelPage from './CancelPage';
 
 export default function LandingPage({ currentUser, onLogout }) {
   const [user, setUser] = useState(currentUser || null);
@@ -26,6 +27,18 @@ export default function LandingPage({ currentUser, onLogout }) {
       .then(res => setRatingData(res.data))
       .catch(() => {});
   }, []);
+
+  // ✅ VIS CancelPage hvis URL har email + token
+  const urlParams = new URLSearchParams(window.location.search);
+  const emailParam = urlParams.get('email');
+  const tokenParam = urlParams.get('token');
+  
+  if (emailParam && tokenParam) {
+    sessionStorage.setItem('cancelEmail', emailParam);
+    sessionStorage.setItem('cancelToken', tokenParam);
+    window.history.replaceState({}, '', '/');
+    return <CancelPage />;
+  }
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -147,7 +160,10 @@ export default function LandingPage({ currentUser, onLogout }) {
 
       <footer style={{ position:"relative", zIndex:1, borderTop:"1px solid rgba(55,138,221,0.1)", padding:"24px 20px", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12, fontSize:11, color:"rgba(232,237,245,0.3)" }}>
         <span>© 2026 SuperKlip</span>
-        <div style={{ display:"flex", gap:16 }}><Link to="/book" className="nav-link">Book</Link><Link to="/login" className="nav-link">Log ind</Link></div>
+        <div style={{ display:"flex", gap:16 }}>
+          <Link to="/book" className="nav-link">Book</Link>
+          <Link to="/login" className="nav-link">Log ind</Link>
+        </div>
       </footer>
     </div>
   );
