@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { LogOut, Calendar, Scissors, User, X, Plus, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
+import { LogOut, Calendar, Scissors, X, Plus, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
 import { getCurrentUser } from '../../SYSAdmin';
 
 export default function AdminPanel({ onLogout }) {
@@ -13,7 +13,6 @@ export default function AdminPanel({ onLogout }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  // Blokerings-form
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [blockDate, setBlockDate] = useState('');
   const [blockReason, setBlockReason] = useState('');
@@ -23,7 +22,7 @@ export default function AdminPanel({ onLogout }) {
   const API_URL = "https://salonproject.onrender.com";
 
   useEffect(() => {
-    if (!frisor || frisor.rolle !== "frisor") {
+    if (!frisor || (frisor.rolle !== "frisor" && frisor.rolle !== "admin")) {
       navigate("/login");
       return;
     }
@@ -32,13 +31,23 @@ export default function AdminPanel({ onLogout }) {
 
   const fetchData = async () => {
     setLoading(true);
+    setError('');
+    
     try {
+      const frisorId = frisor?.frisorId;
+      console.log('Henter data for frisør ID:', frisorId);
+      
+      if (!frisorId) {
+        setError('Ingen frisør ID fundet');
+        setLoading(false);
+        return;
+      }
+
       const [bookingRes, blokeringRes] = await Promise.all([
-        axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${frisor.frisorId}`),
-        axios.get(`${API_URL}/api/HairDresserSalon/blokeringer/${frisor.frisorId}`)
+        axios.get(`${API_URL}/api/HairDresserSalon/occupied-slots/${frisorId}`),
+        axios.get(`${API_URL}/api/HairDresserSalon/blokeringer/${frisorId}`)
       ]);
       
-      // Filtrer bookinger (ikke blokeringer)
       const onlyBookings = (bookingRes.data || []).filter(b => 
         !b.title?.toLowerCase().includes('blokeret') && 
         !b.title?.toLowerCase().includes('skole')
@@ -47,6 +56,7 @@ export default function AdminPanel({ onLogout }) {
       setBlokeringer(blokeringRes.data || []);
       setLoading(false);
     } catch (err) {
+      console.error('Fejl ved hentning:', err);
       setError('Kunne ikke hente data');
       setLoading(false);
     }
@@ -64,7 +74,6 @@ export default function AdminPanel({ onLogout }) {
     try {
       await axios.post(`${API_URL}/api/HairDresserSalon/bloker`, {
         frisorId: frisor.frisorId,
-        dato: blockDate,
         startTid: `${blockDate}T${blockStart}:00`,
         slutTid: `${blockDate}T${blockEnd}:00`,
         arsag: blockReason || 'Blokeret dag'
@@ -119,9 +128,9 @@ export default function AdminPanel({ onLogout }) {
         .input-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(55,138,221,0.15); color: #e8edf5; padding: 10px 14px; border-radius: 10px; font-size: 12px; outline: none; box-sizing: border-box; }
         .input-field:focus { border-color: rgba(55,138,221,0.5); }
         .card { background: rgba(255,255,255,0.02); border: 1px solid rgba(55,138,221,0.1); border-radius: 16px; padding: 20px; }
+        @media (max-width: 768px) { .booking-grid { grid-template-columns: 1fr !important; } }
       `}</style>
 
-      {/* NAVBAR */}
       <nav style={{ background: "rgba(8,12,20,0.95)", borderBottom: "1px solid rgba(55,138,221,0.1)", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
         <Link to="/" style={{ textDecoration: "none", fontSize: 16, fontWeight: 700, letterSpacing: "0.15em", color: "#e8edf5", textTransform: "uppercase" }}>✂ SuperKlip</Link>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -134,7 +143,6 @@ export default function AdminPanel({ onLogout }) {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px" }}>
         
-        {/* HEADER */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 300, marginBottom: 4, letterSpacing: "-0.02em" }}>Frisørpanel</h1>
@@ -146,11 +154,9 @@ export default function AdminPanel({ onLogout }) {
           </button>
         </div>
 
-        {/* MESSAGES */}
         {success && <div style={{ background: "rgba(15,110,86,0.1)", border: "1px solid rgba(93,202,165,0.2)", color: "#5dcaa5", padding: "12px 16px", borderRadius: 10, marginBottom: 16, fontSize: 12, fontWeight: 600, animation: "fadeIn 0.3s ease" }}>{success}</div>}
         {error && <div style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)", color: "#fca5a5", padding: "12px 16px", borderRadius: 10, marginBottom: 16, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}><AlertCircle size={14} /> {error}</div>}
 
-        {/* BLOKERINGS-FORM */}
         {showBlockForm && (
           <div className="card" style={{ marginBottom: 20, animation: "fadeIn 0.3s ease" }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Blokér en dag</h3>
@@ -173,7 +179,6 @@ export default function AdminPanel({ onLogout }) {
           </div>
         )}
 
-        {/* BLOKERINGER */}
         {blokeringer.length > 0 && (
           <div className="card" style={{ marginBottom: 20 }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
@@ -181,10 +186,10 @@ export default function AdminPanel({ onLogout }) {
             </h3>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {blokeringer.map(b => (
-                <div key={b.blokeringId} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+                <div key={b.blokeringId || b.id} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
                   <span>{new Date(b.startTid).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}</span>
                   <span style={{ color: "rgba(232,237,245,0.4)" }}>{b.arsag || 'Blokeret'}</span>
-                  <button onClick={() => handleDeleteBlokering(b.blokeringId)} style={{ background: "none", border: "none", color: "#fca5a5", cursor: "pointer", padding: 2 }}>
+                  <button onClick={() => handleDeleteBlokering(b.blokeringId || b.id)} style={{ background: "none", border: "none", color: "#fca5a5", cursor: "pointer", padding: 2 }}>
                     <Trash2 size={12} />
                   </button>
                 </div>
@@ -193,7 +198,6 @@ export default function AdminPanel({ onLogout }) {
           </div>
         )}
 
-        {/* LOADING */}
         {loading && (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <RefreshCw size={24} color="#378add" style={{ animation: "spin 1s linear infinite", marginBottom: 12 }} />
@@ -201,10 +205,8 @@ export default function AdminPanel({ onLogout }) {
           </div>
         )}
 
-        {/* BOOKINGER */}
         {!loading && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            {/* Kommende */}
+          <div className="booking-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             <div className="card">
               <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
                 <Scissors size={14} color="#378add" /> Kommende bookinger ({upcomingBookings.length})
@@ -214,20 +216,15 @@ export default function AdminPanel({ onLogout }) {
               ) : (
                 upcomingBookings.slice(0, 10).map(b => (
                   <div key={b.id || b.startTid} style={{ background: "rgba(24,95,165,0.08)", border: "1px solid rgba(55,138,221,0.15)", borderRadius: 10, padding: "12px", marginBottom: 8 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 600 }}>{b.title || 'Booking'}</p>
-                        <p style={{ fontSize: 10, color: "rgba(232,237,245,0.4)", marginTop: 2 }}>
-                          {new Date(b.startTid).toLocaleString('da-DK', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
+                    <p style={{ fontSize: 13, fontWeight: 600 }}>{b.title || 'Booking'}</p>
+                    <p style={{ fontSize: 10, color: "rgba(232,237,245,0.4)", marginTop: 2 }}>
+                      {new Date(b.startTid).toLocaleString('da-DK', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
                 ))
               )}
             </div>
 
-            {/* Tidligere */}
             <div className="card">
               <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
                 <Calendar size={14} /> Tidligere ({pastBookings.length})
@@ -248,7 +245,6 @@ export default function AdminPanel({ onLogout }) {
           </div>
         )}
 
-        {/* Bund links */}
         <div style={{ marginTop: 32, textAlign: "center" }}>
           <Link to="/" style={{ color: "rgba(232,237,245,0.3)", fontSize: 11, textDecoration: "none" }}>
             ← Tilbage til forsiden

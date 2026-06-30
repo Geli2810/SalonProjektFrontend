@@ -28,7 +28,7 @@ export default function LandingPage({ currentUser, onLogout }) {
       .catch(() => {});
   }, []);
 
-  // ✅ VIS CancelPage hvis URL har email + token
+  // VIS CancelPage hvis URL har email + token
   const urlParams = new URLSearchParams(window.location.search);
   const emailParam = urlParams.get('email');
   const tokenParam = urlParams.get('token');
@@ -85,7 +85,7 @@ export default function LandingPage({ currentUser, onLogout }) {
               <button onClick={handleLogout} style={{ display:"flex", alignItems:"center", gap:6, background:"rgba(162,45,45,0.15)", border:"1px solid rgba(162,45,45,0.3)", color:"#f09595", padding:"7px 12px", borderRadius:50, fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer" }}><LogOut size={12} /></button>
             </>
           )}
-          {user?.rolle === "frisor" && (
+          {(user?.rolle === "frisor" || user?.rolle === "admin") && (
             <>
               <Link to="/admin" className="nav-link">Admin</Link>
               <button onClick={handleLogout} style={{ display:"flex", alignItems:"center", gap:6, background:"rgba(162,45,45,0.15)", border:"1px solid rgba(162,45,45,0.3)", color:"#f09595", padding:"7px 12px", borderRadius:50, fontSize:10, fontWeight:700, cursor:"pointer" }}><LogOut size={12} /></button>

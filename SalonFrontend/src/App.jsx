@@ -19,7 +19,7 @@ function App() {
   }, []);
 
   const handleLoginSuccess = (userData, rolle = "kunde") => {
-    if (rolle === "frisor") {
+    if (rolle === "frisor" || rolle === "admin") {
       sessionStorage.setItem("frisor", JSON.stringify(userData));
     } else {
       sessionStorage.setItem("user", JSON.stringify(userData));
@@ -59,7 +59,7 @@ function App() {
             path="/login" 
             element={
               currentUser ? 
-                <Navigate to={currentUser.rolle === "frisor" ? "/admin" : "/"} /> : 
+                <Navigate to={(currentUser.rolle === "frisor" || currentUser.rolle === "admin") ? "/admin" : "/"} /> : 
                 <LoginPage onLoginSuccess={handleLoginSuccess} />
             } 
           />
@@ -90,11 +90,11 @@ function App() {
             element={<BookingPage />} 
           />
           
-          {/* ADMIN PANEL - KUN for frisører */}
+          {/* ADMIN PANEL - KUN for frisører/admins */}
           <Route 
             path="/admin" 
             element={
-              currentUser?.rolle === "frisor" ? 
+              (currentUser?.rolle === "frisor" || currentUser?.rolle === "admin") ? 
                 <AdminPanel onLogout={handleLogout} /> : 
                 <Navigate to="/login" />
             } 
